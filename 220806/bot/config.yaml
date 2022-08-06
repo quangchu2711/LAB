@@ -1,0 +1,61 @@
+MqttConfig        : 
+  Broker          : 'localhost:1883'
+
+  SerialSrcTopic  : 'Serial/COM4/Rx'
+  SerialDstTopic  : 'Serial/COM4/Tx'
+
+  TeleSrcTopic    : 'Telegram/Quang_bot/Rx'
+  TeleDstTopic    : 'Telegram/Quang_bot/Tx'    
+
+CmdConfig:
+
+  Led1OnMsgVN:
+    TokenCode        : ['Bật đèn 1', 'Bat den 1']
+    Cmd              : 'ONLED: 1'
+    StatusCode       : '1'
+    StatusMsg        : 'Đèn 1 đã bật'
+
+  Led1OnMsgEN:
+    TokenCode        : ['Led 1 on', 'LED 1 ON']
+    Cmd              : 'ONLED: 1'
+    StatusCode       : '1'
+    StatusMsg        : 'Led 1 was on'     
+
+  Led1OffMsgVN:
+    TokenCode        : ['Tắt đèn 1', 'Tat den 1']
+    Cmd              : 'OFFLED: 1'
+    StatusCode       : '0'
+    StatusMsg        : 'Đèn 1 đã tắt'
+
+  Led1OffMsgEN:
+    TokenCode        : ['Led 1 off', 'LED 1 OFF']
+    Cmd              : 'OFFLED: 1'
+    StatusCode       : '0'
+    StatusMsg        : 'Led 1 was off'     
+
+  Led2OnMsgVN:
+    TokenCode        : ['Bật đèn 2', 'Bat den 2']
+    Cmd              : 'ONLED: 2'
+    StatusCode       : '2'
+    StatusMsg        : 'Đèn 2 đã bật'
+
+  Led2OnMsgEN:
+    TokenCode        : ['Led 2 on', 'LED 2 ON']
+    Cmd              : 'ONLED: 2'
+    StatusCode       : '2'
+    StatusMsg        : 'Led 2 was on'     
+
+  Led2OffMsgVN:
+    TokenCode        : ['Tắt đèn 2', 'Tat den 2']
+    Cmd              : 'OFFLED: 2'
+    StatusCode       : '0'
+    StatusMsg        : 'Đèn 2 đã tắt'
+
+  Led2OffMsgEN:
+    TokenCode        : ['Led 2 off', 'LED 2 OFF']
+    Cmd              : 'OFFLED: 2'
+    StatusCode       : '0'
+    StatusMsg        : 'Led 2 was off' 
+
+  DefaultRespMsg  : 'Wrong command. Please try again!'
+  ConnectionLostResMsg: 'Response failed'
