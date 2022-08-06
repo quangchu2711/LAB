@@ -13,7 +13,7 @@ import (
 var mqttClientHandleTele mqtt.Client
 var mqttClientHandleSerial mqtt.Client
 
-var  channel chan string
+var  serialRXChannel chan string
 
 type Mqtt struct {
     Broker string
@@ -96,17 +96,32 @@ func sendToTelegram(msg string) {
 }
 
 func chanSendRes() {
-    channel <-"Led control feedback"
+    serialRXChannel <-"Led control feedback"
 }
 
-func chanWaitResAndSendMsgTele(msg string, timeOut time.Duration) {
-     select {
-        case <-channel:
-            sendToTelegram(msg) 
+// func chanWaitResAndSendMsgTele(msg string, timeOut time.Duration) {
+//      select {
+//         case <-channel:
+//             sendToTelegram(msg) 
+//         case <-time.After(timeOut * time.Second):
+//             sendToTelegram(cfg.CmdConfig.ConnectionLostResMsg)
+//     }
+// }
+
+
+func readSerialRXChannel(timeOut time.Duration) string {
+    var msg string
+
+    select {
+        case msg =  <-serialRXChannel:
+            return msg;//sendToTelegram(msg) 
         case <-time.After(timeOut * time.Second):
-            sendToTelegram(cfg.CmdConfig.ConnectionLostResMsg)
+            msg = "TIMEOUT"
+            return msg
     }
 }
+
+
 
 func handleTeleCmd(cmd string) {
 
@@ -114,50 +129,65 @@ func handleTeleCmd(cmd string) {
         case cfg.CmdConfig.Led1OnMsgVN.TokenCode[0], 
              cfg.CmdConfig.Led1OnMsgVN.TokenCode[1]:
 
+             // cmd := cfg.CmdConfig.Led1OnMsgVN
+
              sendToSerial(cfg.CmdConfig.Led1OnMsgVN.Cmd)
-             chanWaitResAndSendMsgTele(cfg.CmdConfig.Led1OnMsgVN.StatusMsg, cfg.CmdConfig.Timeout)
+             
+             resRxChan := readSerialRXChannel(cfg.CmdConfig.Timeout);
+
+             if resRxChan == cfg.CmdConfig.Led1OnMsgVN.StatusCode {
+                resDataTele :=  cfg.CmdConfig.Led1OnMsgVN.StatusMsg
+                sendToTelegram(resDataTele)
+             }else{
+                resTimeoutTele := cfg.CmdConfig.ConnectionLostResMsg
+                sendToTelegram(resTimeoutTele)
+             }
+
+//             sendToTelegram(resTele)
+             
+//             chanWaitResAndSendMsgTele(cfg.CmdConfig.Led1OnMsgVN.StatusMsg, cfg.CmdConfig.Timeout)
 
         case cfg.CmdConfig.Led1OnMsgEN.TokenCode[0], 
              cfg.CmdConfig.Led1OnMsgEN.TokenCode[1]:
 
              sendToSerial(cfg.CmdConfig.Led1OnMsgEN.Cmd)
-             chanWaitResAndSendMsgTele(cfg.CmdConfig.Led1OnMsgEN.StatusMsg, cfg.CmdConfig.Timeout)
+//             chanWaitResAndSendMsgTele(cfg.CmdConfig.Led1OnMsgEN.StatusMsg, cfg.CmdConfig.Timeout)
 
-        case cfg.CmdConfig.Led1OffMsgVN.TokenCode[0], 
-             cfg.CmdConfig.Led1OffMsgVN.TokenCode[1]:
+        // case cfg.CmdConfig.Led1OffMsgVN.TokenCode[0], 
+        //      cfg.CmdConfig.Led1OffMsgVN.TokenCode[1]:
 
-             sendToSerial(cfg.CmdConfig.Led1OffMsgVN.Cmd)
-             chanWaitResAndSendMsgTele(cfg.CmdConfig.Led1OffMsgVN.StatusMsg, cfg.CmdConfig.Timeout)
+        //      sendToSerial(cfg.CmdConfig.Led1OffMsgVN.Cmd)
+        //      chanWaitResAndSendMsgTele(cfg.CmdConfig.Led1OffMsgVN.StatusMsg, cfg.CmdConfig.Timeout)
 
-        case cfg.CmdConfig.Led1OffMsgEN.TokenCode[0], 
-             cfg.CmdConfig.Led1OffMsgEN.TokenCode[1]:
+        // case cfg.CmdConfig.Led1OffMsgEN.TokenCode[0], 
+        //      cfg.CmdConfig.Led1OffMsgEN.TokenCode[1]:
 
-             sendToSerial(cfg.CmdConfig.Led1OffMsgEN.Cmd)
-             chanWaitResAndSendMsgTele(cfg.CmdConfig.Led1OffMsgEN.StatusMsg, cfg.CmdConfig.Timeout)
+        //      sendToSerial(cfg.CmdConfig.Led1OffMsgEN.Cmd)
+        //      chanWaitResAndSendMsgTele(cfg.CmdConfig.Led1OffMsgEN.StatusMsg, cfg.CmdConfig.Timeout)
 
-        case cfg.CmdConfig.Led2OnMsgVN.TokenCode[0], 
-             cfg.CmdConfig.Led2OnMsgVN.TokenCode[1]:
+        // case cfg.CmdConfig.Led2OnMsgVN.TokenCode[0], 
+        //      cfg.CmdConfig.Led2OnMsgVN.TokenCode[1]:
 
-             sendToSerial(cfg.CmdConfig.Led2OnMsgVN.Cmd)
-             chanWaitResAndSendMsgTele(cfg.CmdConfig.Led2OnMsgVN.StatusMsg, cfg.CmdConfig.Timeout)
+        //      sendToSerial(cfg.CmdConfig.Led2OnMsgVN.Cmd)
+        //      chanWaitResAndSendMsgTele(cfg.CmdConfig.Led2OnMsgVN.StatusMsg, cfg.CmdConfig.Timeout)
 
-        case cfg.CmdConfig.Led2OnMsgEN.TokenCode[0], 
-             cfg.CmdConfig.Led2OnMsgEN.TokenCode[1]:
+        // case cfg.CmdConfig.Led2OnMsgEN.TokenCode[0], 
+        //      cfg.CmdConfig.Led2OnMsgEN.TokenCode[1]:
 
-             sendToSerial(cfg.CmdConfig.Led2OnMsgEN.Cmd)
-             chanWaitResAndSendMsgTele(cfg.CmdConfig.Led2OnMsgEN.StatusMsg, cfg.CmdConfig.Timeout)
+        //      sendToSerial(cfg.CmdConfig.Led2OnMsgEN.Cmd)
+        //      chanWaitResAndSendMsgTele(cfg.CmdConfig.Led2OnMsgEN.StatusMsg, cfg.CmdConfig.Timeout)
 
-        case cfg.CmdConfig.Led2OffMsgVN.TokenCode[0], 
-             cfg.CmdConfig.Led2OffMsgVN.TokenCode[1]:
+        // case cfg.CmdConfig.Led2OffMsgVN.TokenCode[0], 
+        //      cfg.CmdConfig.Led2OffMsgVN.TokenCode[1]:
 
-             sendToSerial(cfg.CmdConfig.Led2OffMsgVN.Cmd)
-             chanWaitResAndSendMsgTele(cfg.CmdConfig.Led2OffMsgVN.StatusMsg, cfg.CmdConfig.Timeout)
+        //      sendToSerial(cfg.CmdConfig.Led2OffMsgVN.Cmd)
+        //      chanWaitResAndSendMsgTele(cfg.CmdConfig.Led2OffMsgVN.StatusMsg, cfg.CmdConfig.Timeout)
 
-        case cfg.CmdConfig.Led2OffMsgEN.TokenCode[0], 
-             cfg.CmdConfig.Led2OffMsgEN.TokenCode[1]:
+        // case cfg.CmdConfig.Led2OffMsgEN.TokenCode[0], 
+        //      cfg.CmdConfig.Led2OffMsgEN.TokenCode[1]:
 
-             sendToSerial(cfg.CmdConfig.Led2OffMsgEN.Cmd)
-             chanWaitResAndSendMsgTele(cfg.CmdConfig.Led2OffMsgEN.StatusMsg, cfg.CmdConfig.Timeout)
+        //      sendToSerial(cfg.CmdConfig.Led2OffMsgEN.Cmd)
+        //      chanWaitResAndSendMsgTele(cfg.CmdConfig.Led2OffMsgEN.StatusMsg, cfg.CmdConfig.Timeout)
         default:
             sendToTelegram(cfg.CmdConfig.DefaultRespMsg)
     }
@@ -165,12 +195,15 @@ func handleTeleCmd(cmd string) {
 
 func handleSerialCmd(cmd string) {
 
-    switch cmd {
-        case cfg.CmdConfig.Led1OnMsgVN.StatusCode:
-            chanSendRes()
-        case cfg.CmdConfig.Led1OffMsgVN.StatusCode:
-            chanSendRes()
-    }
+//    chanSendRes()
+    serialRXChannel <-cmd
+
+    // switch cmd {
+    //     case cfg.CmdConfig.Led1OnMsgVN.StatusCode:
+    //         chanSendRes()
+    //     case cfg.CmdConfig.Led1OffMsgVN.StatusCode:
+    //         chanSendRes()
+    // }
 }
 
 var messageTelePubHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) {
@@ -209,7 +242,7 @@ func mqttBegin(broker string, messagePubHandler *mqtt.MessageHandler) mqtt.Clien
 
 func main() {
 
-    channel = make(chan string, 1)
+    serialRXChannel = make(chan string, 1)
 
     yamlFileHandle()
 
