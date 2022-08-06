@@ -42,6 +42,7 @@ type LedControlCode struct {
     Cmd string
     StatusCode string
     StatusMsg string
+    ResponseMap map[string]string
 }
 
 type Command struct {
@@ -114,7 +115,7 @@ func readSerialRXChannel(timeOut time.Duration) string {
 
     select {
         case msg =  <-serialRXChannel:
-            return msg;//sendToTelegram(msg) 
+            return msg;
         case <-time.After(timeOut * time.Second):
             msg = "TIMEOUT"
             return msg
@@ -129,23 +130,25 @@ func handleTeleCmd(cmd string) {
         case cfg.CmdConfig.Led1OnMsgVN.TokenCode[0], 
              cfg.CmdConfig.Led1OnMsgVN.TokenCode[1]:
 
-             // cmd := cfg.CmdConfig.Led1OnMsgVN
+             script := cfg.CmdConfig.Led1OnMsgVN
 
-             sendToSerial(cfg.CmdConfig.Led1OnMsgVN.Cmd)
+             sendToSerial(script.Cmd)
              
              resRxChan := readSerialRXChannel(cfg.CmdConfig.Timeout);
 
-             if resRxChan == cfg.CmdConfig.Led1OnMsgVN.StatusCode {
-                resDataTele :=  cfg.CmdConfig.Led1OnMsgVN.StatusMsg
-                sendToTelegram(resDataTele)
-             }else{
-                resTimeoutTele := cfg.CmdConfig.ConnectionLostResMsg
-                sendToTelegram(resTimeoutTele)
-             }
+             resDataTele :=  script.ResponseMap[resRxChan]
 
-//             sendToTelegram(resTele)
-             
-//             chanWaitResAndSendMsgTele(cfg.CmdConfig.Led1OnMsgVN.StatusMsg, cfg.CmdConfig.Timeout)
+             sendToTelegram(resDataTele)
+
+            //  switch resRxChan {
+            //     case script.StatusCode:
+            //         resDataTele :=  script.StatusMsg
+            //         sendToTelegram(resDataTele)
+            //     default:
+            //         resTimeoutTele := cfg.CmdConfig.ConnectionLostResMsg
+            //         sendToTelegram(resTimeoutTele)                    
+            // }
+
 
         case cfg.CmdConfig.Led1OnMsgEN.TokenCode[0], 
              cfg.CmdConfig.Led1OnMsgEN.TokenCode[1]:
