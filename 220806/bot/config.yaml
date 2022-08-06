@@ -57,5 +57,6 @@ CmdConfig:
     StatusCode       : '0'
     StatusMsg        : 'Led 2 was off' 
 
-  DefaultRespMsg  : 'Wrong command. Please try again!'
+  DefaultRespMsg     : 'Wrong command. Please try again!'
   ConnectionLostResMsg: 'Response failed'
+  Timeout            : 3

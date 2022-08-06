@@ -59,6 +59,7 @@ type Command struct {
 
     DefaultRespMsg string
     ConnectionLostResMsg string
+    Timeout time.Duration
 }
 
 type FileConfig struct {
@@ -114,49 +115,49 @@ func handleTeleCmd(cmd string) {
              cfg.CmdConfig.Led1OnMsgVN.TokenCode[1]:
 
              sendToSerial(cfg.CmdConfig.Led1OnMsgVN.Cmd)
-             chanWaitResAndSendMsgTele(cfg.CmdConfig.Led1OnMsgVN.StatusMsg, 3)
+             chanWaitResAndSendMsgTele(cfg.CmdConfig.Led1OnMsgVN.StatusMsg, cfg.CmdConfig.Timeout)
 
         case cfg.CmdConfig.Led1OnMsgEN.TokenCode[0], 
              cfg.CmdConfig.Led1OnMsgEN.TokenCode[1]:
 
              sendToSerial(cfg.CmdConfig.Led1OnMsgEN.Cmd)
-             chanWaitResAndSendMsgTele(cfg.CmdConfig.Led1OnMsgEN.StatusMsg, 3)
+             chanWaitResAndSendMsgTele(cfg.CmdConfig.Led1OnMsgEN.StatusMsg, cfg.CmdConfig.Timeout)
 
         case cfg.CmdConfig.Led1OffMsgVN.TokenCode[0], 
              cfg.CmdConfig.Led1OffMsgVN.TokenCode[1]:
 
              sendToSerial(cfg.CmdConfig.Led1OffMsgVN.Cmd)
-             chanWaitResAndSendMsgTele(cfg.CmdConfig.Led1OffMsgVN.StatusMsg, 3)
+             chanWaitResAndSendMsgTele(cfg.CmdConfig.Led1OffMsgVN.StatusMsg, cfg.CmdConfig.Timeout)
 
         case cfg.CmdConfig.Led1OffMsgEN.TokenCode[0], 
              cfg.CmdConfig.Led1OffMsgEN.TokenCode[1]:
 
              sendToSerial(cfg.CmdConfig.Led1OffMsgEN.Cmd)
-             chanWaitResAndSendMsgTele(cfg.CmdConfig.Led1OffMsgEN.StatusMsg, 3)
+             chanWaitResAndSendMsgTele(cfg.CmdConfig.Led1OffMsgEN.StatusMsg, cfg.CmdConfig.Timeout)
 
         case cfg.CmdConfig.Led2OnMsgVN.TokenCode[0], 
              cfg.CmdConfig.Led2OnMsgVN.TokenCode[1]:
 
              sendToSerial(cfg.CmdConfig.Led2OnMsgVN.Cmd)
-             chanWaitResAndSendMsgTele(cfg.CmdConfig.Led2OnMsgVN.StatusMsg, 3)
+             chanWaitResAndSendMsgTele(cfg.CmdConfig.Led2OnMsgVN.StatusMsg, cfg.CmdConfig.Timeout)
 
         case cfg.CmdConfig.Led2OnMsgEN.TokenCode[0], 
              cfg.CmdConfig.Led2OnMsgEN.TokenCode[1]:
 
              sendToSerial(cfg.CmdConfig.Led2OnMsgEN.Cmd)
-             chanWaitResAndSendMsgTele(cfg.CmdConfig.Led2OnMsgEN.StatusMsg, 3)
+             chanWaitResAndSendMsgTele(cfg.CmdConfig.Led2OnMsgEN.StatusMsg, cfg.CmdConfig.Timeout)
 
         case cfg.CmdConfig.Led2OffMsgVN.TokenCode[0], 
              cfg.CmdConfig.Led2OffMsgVN.TokenCode[1]:
 
              sendToSerial(cfg.CmdConfig.Led2OffMsgVN.Cmd)
-             chanWaitResAndSendMsgTele(cfg.CmdConfig.Led2OffMsgVN.StatusMsg, 3)
+             chanWaitResAndSendMsgTele(cfg.CmdConfig.Led2OffMsgVN.StatusMsg, cfg.CmdConfig.Timeout)
 
         case cfg.CmdConfig.Led2OffMsgEN.TokenCode[0], 
              cfg.CmdConfig.Led2OffMsgEN.TokenCode[1]:
 
              sendToSerial(cfg.CmdConfig.Led2OffMsgEN.Cmd)
-             chanWaitResAndSendMsgTele(cfg.CmdConfig.Led2OffMsgEN.StatusMsg, 3)
+             chanWaitResAndSendMsgTele(cfg.CmdConfig.Led2OffMsgEN.StatusMsg, cfg.CmdConfig.Timeout)
         default:
             sendToTelegram(cfg.CmdConfig.DefaultRespMsg)
     }
