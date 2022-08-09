@@ -96,20 +96,6 @@ func sendToTelegram(msg string) {
      mqttClientHandleSerial.Publish(cfg.MqttConfig.TeleDstTopic, 0, false, msg)
 }
 
-func chanSendRes() {
-    serialRXChannel <-"Led control feedback"
-}
-
-// func chanWaitResAndSendMsgTele(msg string, timeOut time.Duration) {
-//      select {
-//         case <-channel:
-//             sendToTelegram(msg) 
-//         case <-time.After(timeOut * time.Second):
-//             sendToTelegram(cfg.CmdConfig.ConnectionLostResMsg)
-//     }
-// }
-
-
 func readSerialRXChannel(timeOut time.Duration) string {
     var msg string
 
@@ -130,25 +116,22 @@ func handleTeleCmd(cmd string) {
         case cfg.CmdConfig.Led1OnMsgVN.TokenCode[0], 
              cfg.CmdConfig.Led1OnMsgVN.TokenCode[1]:
 
-             script := cfg.CmdConfig.Led1OnMsgVN
+            script := cfg.CmdConfig.Led1OnMsgVN
 
-             sendToSerial(script.Cmd)
-             
-             resRxChan := readSerialRXChannel(cfg.CmdConfig.Timeout);
+            sendToSerial(script.Cmd)
 
-             resDataTele :=  script.ResponseMap[resRxChan]
+            resRxChan := readSerialRXChannel(cfg.CmdConfig.Timeout)
 
-             sendToTelegram(resDataTele)
+            resDataTele, checkKeyExists := script.ResponseMap[resRxChan];
 
-            //  switch resRxChan {
-            //     case script.StatusCode:
-            //         resDataTele :=  script.StatusMsg
-            //         sendToTelegram(resDataTele)
-            //     default:
-            //         resTimeoutTele := cfg.CmdConfig.ConnectionLostResMsg
-            //         sendToTelegram(resTimeoutTele)                    
-            // }
+            switch checkKeyExists {
+                case true:
+                    sendToTelegram(resDataTele)
 
+                default:
+                    sendToTelegram(script.ResponseMap["ERROR CMD"])
+
+            }
 
         case cfg.CmdConfig.Led1OnMsgEN.TokenCode[0], 
              cfg.CmdConfig.Led1OnMsgEN.TokenCode[1]:
@@ -197,16 +180,7 @@ func handleTeleCmd(cmd string) {
 }
 
 func handleSerialCmd(cmd string) {
-
-//    chanSendRes()
     serialRXChannel <-cmd
-
-    // switch cmd {
-    //     case cfg.CmdConfig.Led1OnMsgVN.StatusCode:
-    //         chanSendRes()
-    //     case cfg.CmdConfig.Led1OffMsgVN.StatusCode:
-    //         chanSendRes()
-    // }
 }
 
 var messageTelePubHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) {
