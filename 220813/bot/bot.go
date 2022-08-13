@@ -109,6 +109,23 @@ func readSerialRXChannel(timeOut time.Duration) string {
 }
 
 
+func handleTeleScript(script LedControlCode) {
+
+    sendToSerial(script.Cmd)
+
+    resRxChan := readSerialRXChannel(cfg.CmdConfig.Timeout)
+
+    resDataTele, checkKeyExists := script.ResponseMap[resRxChan];
+
+    switch checkKeyExists {
+        case true:
+            sendToTelegram(resDataTele)
+
+        default:
+            sendToTelegram(script.ResponseMap["ERROR CMD"])
+
+    }
+} 
 
 func handleTeleCmd(cmd string) {
 
@@ -116,27 +133,15 @@ func handleTeleCmd(cmd string) {
         case cfg.CmdConfig.Led1OnMsgVN.TokenCode[0], 
              cfg.CmdConfig.Led1OnMsgVN.TokenCode[1]:
 
-            script := cfg.CmdConfig.Led1OnMsgVN
-
-            sendToSerial(script.Cmd)
-
-            resRxChan := readSerialRXChannel(cfg.CmdConfig.Timeout)
-
-            resDataTele, checkKeyExists := script.ResponseMap[resRxChan];
-
-            switch checkKeyExists {
-                case true:
-                    sendToTelegram(resDataTele)
-
-                default:
-                    sendToTelegram(script.ResponseMap["ERROR CMD"])
-
-            }
+            handleTeleScript(cfg.CmdConfig.Led1OnMsgVN)
 
         case cfg.CmdConfig.Led1OnMsgEN.TokenCode[0], 
              cfg.CmdConfig.Led1OnMsgEN.TokenCode[1]:
+            
+            handleTeleScript(cfg.CmdConfig.Led1OnMsgEN)
+           
 
-             sendToSerial(cfg.CmdConfig.Led1OnMsgEN.Cmd)
+             // sendToSerial(cfg.CmdConfig.Led1OnMsgEN.Cmd)
 //             chanWaitResAndSendMsgTele(cfg.CmdConfig.Led1OnMsgEN.StatusMsg, cfg.CmdConfig.Timeout)
 
         // case cfg.CmdConfig.Led1OffMsgVN.TokenCode[0], 

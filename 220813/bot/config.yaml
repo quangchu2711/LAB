@@ -13,15 +13,17 @@ CmdConfig:
     TokenCode        : ['Bật đèn 1', 'Bat den 1']
     Cmd              : 'ONLED: 1'
     ResponseMap:
-       '1'          : 'Đèn 1 đã bật'
+       '1'           : 'Đèn 1 đã bật'
        'TIMEOUT'     : 'Quá thời gian điều khiển đèn 1'
        'ERROR CMD'   : 'Lệnh chưa được cấu hình'
 
   Led1OnMsgEN:
     TokenCode        : ['Led 1 on', 'LED 1 ON']
     Cmd              : 'ONLED: 1'
-    StatusCode       : '1'
-    StatusMsg        : 'Led 1 was on'     
+    ResponseMap:
+       '1'           : 'Led 1 was on'
+       'TIMEOUT'     : 'Led 1 control time exceeded'
+       'ERROR CMD'   : 'Command has not been initialized'  
 
   Led1OffMsgVN:
     TokenCode        : ['Tắt đèn 1', 'Tat den 1']
