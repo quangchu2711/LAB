@@ -1,3 +1,4 @@
+
 MqttConfig        : 
   Broker          : 'localhost:1883'
 
@@ -9,58 +10,62 @@ MqttConfig        :
 
 CmdConfig:
 
-  Led1OnMsgVN:
-    TokenCode        : ['Bật đèn 1', 'Bat den 1']
-    Cmd              : 'ONLED: 1'
-    ResponseMap:
-       '1'           : 'Đèn 1 đã bật'
-       'TIMEOUT'     : 'Quá thời gian điều khiển đèn 1'
-       'ERROR CMD'   : 'Lệnh chưa được cấu hình'
+  ControlLed:
+    - TokenCode        : ['Bật đèn 1', 'Bat den 1', 'bật đèn 1', 'bat den 1']
+      Cmd              : 'ONLED: 1'
+      ResponseMap:
+         '1'           : 'Đèn 1 đã bật'
+         'TIMEOUT'     : 'Quá thời gian điều khiển đèn 1'
+         'ERROR CMD'   : 'Lệnh chưa được cấu hình'
 
-  Led1OnMsgEN:
-    TokenCode        : ['Led 1 on', 'LED 1 ON']
-    Cmd              : 'ONLED: 1'
-    ResponseMap:
-       '1'           : 'Led 1 was on'
-       'TIMEOUT'     : 'Led 1 control time exceeded'
-       'ERROR CMD'   : 'Command has not been initialized'  
+    - TokenCode        : ['Led 1 on', 'LED 1 ON']
+      Cmd              : 'ONLED: 1'
+      ResponseMap:
+         '1'           : 'Led 1 was on'
+         'TIMEOUT'     : 'Led 1 control time exceeded'
+         'ERROR CMD'   : 'Command has not been initialized'  
 
-  Led1OffMsgVN:
-    TokenCode        : ['Tắt đèn 1', 'Tat den 1']
-    Cmd              : 'OFFLED: 1'
-    StatusCode       : '0'
-    StatusMsg        : 'Đèn 1 đã tắt'
+    - TokenCode        : ['Tắt đèn 1', 'Tat den 1', 'tắt đèn 1', 'tat den 1']
+      Cmd              : 'OFFLED: 1'
+      ResponseMap:
+         '0'           : 'Đèn 1 đã tắt'
+         'TIMEOUT'     : 'Quá thời gian điều khiển đèn 1'
+         'ERROR CMD'   : 'Lệnh chưa được cấu hình'
 
-  Led1OffMsgEN:
-    TokenCode        : ['Led 1 off', 'LED 1 OFF']
-    Cmd              : 'OFFLED: 1'
-    StatusCode       : '0'
-    StatusMsg        : 'Led 1 was off'     
+    - TokenCode        : ['Led 1 off', 'LED 1 OFF']
+      Cmd              : 'OFFLED: 1'
+      ResponseMap:
+         '0'           : 'Led 1 was off'
+         'TIMEOUT'     : 'Led 1 control time exceeded'
+         'ERROR CMD'   : 'Command has not been initialized'           
 
-  Led2OnMsgVN:
-    TokenCode        : ['Bật đèn 2', 'Bat den 2']
-    Cmd              : 'ONLED: 2'
-    StatusCode       : '2'
-    StatusMsg        : 'Đèn 2 đã bật'
+    - TokenCode        : ['Bật đèn 2', 'Bat den 2', 'bật đèn 2', 'bat den 2']
+      Cmd              : 'ONLED: 2'
+      ResponseMap:
+         '1'           : 'Đèn 2 đã bật'
+         'TIMEOUT'     : 'Quá thời gian điều khiển đèn 2'
+         'ERROR CMD'   : 'Lệnh chưa được cấu hình'
 
-  Led2OnMsgEN:
-    TokenCode        : ['Led 2 on', 'LED 2 ON']
-    Cmd              : 'ONLED: 2'
-    StatusCode       : '2'
-    StatusMsg        : 'Led 2 was on'     
+    - TokenCode        : ['Led 2 on', 'LED 2 ON']
+      Cmd              : 'ONLED: 2'
+      ResponseMap:
+         '1'           : 'Led 2 was on'
+         'TIMEOUT'     : 'Led 2 control time exceeded'
+         'ERROR CMD'   : 'Command has not been initialized'   
 
-  Led2OffMsgVN:
-    TokenCode        : ['Tắt đèn 2', 'Tat den 2']
-    Cmd              : 'OFFLED: 2'
-    StatusCode       : '0'
-    StatusMsg        : 'Đèn 2 đã tắt'
+    - TokenCode        : ['Tắt đèn 2', 'Tat den 2', 'tắt đèn 2', 'tat den 2']
+      Cmd              : 'OFFLED: 2'
+      ResponseMap:
+         '0'           : 'Đèn 2 đã tắt'
+         'TIMEOUT'     : 'Quá thời gian điều khiển đèn 2'
+         'ERROR CMD'   : 'Lệnh chưa được cấu hình'
 
-  Led2OffMsgEN:
-    TokenCode        : ['Led 2 off', 'LED 2 OFF']
-    Cmd              : 'OFFLED: 2'
-    StatusCode       : '0'
-    StatusMsg        : 'Led 2 was off' 
+    - TokenCode        : ['Led 2 off', 'LED 2 OFF']
+      Cmd              : 'OFFLED: 2'
+      ResponseMap:
+         '0'           : 'Led 2 was off'
+         'TIMEOUT'     : 'Led 2 control time exceeded'
+         'ERROR CMD'   : 'Command has not been initialized'               
 
-  DefaultRespMsg     : 'Wrong command. Please try again!'
-  ConnectionLostResMsg: 'Response failed'
-  Timeout            : 3
+  DefaultRespMsg       : 'Wrong command. Please try again!'
+  Timeout              : 3

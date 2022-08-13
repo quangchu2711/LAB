@@ -25,38 +25,15 @@ type Mqtt struct {
     TeleDstTopic string   
 }
 
-type OnCode struct {
-    OnCode1 string
-    OnCode2 string
-    OnCode3 string
-}
-
-type OffCode struct {
-    OffCode1 string
-    OffCode2 string
-    OffCode3 string
-}
 
 type LedControlCode struct {
     TokenCode []string
     Cmd string
-    StatusCode string
-    StatusMsg string
     ResponseMap map[string]string
 }
 
 type Command struct {
-    Led1OnMsgVN LedControlCode
-    Led1OnMsgEN LedControlCode
-    
-    Led1OffMsgVN LedControlCode
-    Led1OffMsgEN LedControlCode
-
-    Led2OnMsgVN LedControlCode
-    Led2OnMsgEN LedControlCode
-    
-    Led2OffMsgVN LedControlCode
-    Led2OffMsgEN LedControlCode
+    ControlLed []LedControlCode
 
     DefaultRespMsg string
     ConnectionLostResMsg string
@@ -127,61 +104,31 @@ func handleTeleScript(script LedControlCode) {
     }
 } 
 
-func handleTeleCmd(cmd string) {
+func cmdListMapInit(cmdListMap map[string]LedControlCode) {
+    for _, script := range cfg.CmdConfig.ControlLed {
+        for _, msgTele := range script.TokenCode {
+            cmdListMap[msgTele] = script
+        } 
+    }    
+}
 
-    switch cmd {
-        case cfg.CmdConfig.Led1OnMsgVN.TokenCode[0], 
-             cfg.CmdConfig.Led1OnMsgVN.TokenCode[1]:
+func handleTeleCmd(tokenCode string) {
 
-            handleTeleScript(cfg.CmdConfig.Led1OnMsgVN)
+    cmdListMap := map[string]LedControlCode{}
 
-        case cfg.CmdConfig.Led1OnMsgEN.TokenCode[0], 
-             cfg.CmdConfig.Led1OnMsgEN.TokenCode[1]:
-            
-            handleTeleScript(cfg.CmdConfig.Led1OnMsgEN)
-           
+    cmdListMapInit(cmdListMap)
 
-             // sendToSerial(cfg.CmdConfig.Led1OnMsgEN.Cmd)
-//             chanWaitResAndSendMsgTele(cfg.CmdConfig.Led1OnMsgEN.StatusMsg, cfg.CmdConfig.Timeout)
+    script, checkKeyExists := cmdListMap[tokenCode];
 
-        // case cfg.CmdConfig.Led1OffMsgVN.TokenCode[0], 
-        //      cfg.CmdConfig.Led1OffMsgVN.TokenCode[1]:
+    switch checkKeyExists {
+        case true:
+            handleTeleScript(script)
 
-        //      sendToSerial(cfg.CmdConfig.Led1OffMsgVN.Cmd)
-        //      chanWaitResAndSendMsgTele(cfg.CmdConfig.Led1OffMsgVN.StatusMsg, cfg.CmdConfig.Timeout)
-
-        // case cfg.CmdConfig.Led1OffMsgEN.TokenCode[0], 
-        //      cfg.CmdConfig.Led1OffMsgEN.TokenCode[1]:
-
-        //      sendToSerial(cfg.CmdConfig.Led1OffMsgEN.Cmd)
-        //      chanWaitResAndSendMsgTele(cfg.CmdConfig.Led1OffMsgEN.StatusMsg, cfg.CmdConfig.Timeout)
-
-        // case cfg.CmdConfig.Led2OnMsgVN.TokenCode[0], 
-        //      cfg.CmdConfig.Led2OnMsgVN.TokenCode[1]:
-
-        //      sendToSerial(cfg.CmdConfig.Led2OnMsgVN.Cmd)
-        //      chanWaitResAndSendMsgTele(cfg.CmdConfig.Led2OnMsgVN.StatusMsg, cfg.CmdConfig.Timeout)
-
-        // case cfg.CmdConfig.Led2OnMsgEN.TokenCode[0], 
-        //      cfg.CmdConfig.Led2OnMsgEN.TokenCode[1]:
-
-        //      sendToSerial(cfg.CmdConfig.Led2OnMsgEN.Cmd)
-        //      chanWaitResAndSendMsgTele(cfg.CmdConfig.Led2OnMsgEN.StatusMsg, cfg.CmdConfig.Timeout)
-
-        // case cfg.CmdConfig.Led2OffMsgVN.TokenCode[0], 
-        //      cfg.CmdConfig.Led2OffMsgVN.TokenCode[1]:
-
-        //      sendToSerial(cfg.CmdConfig.Led2OffMsgVN.Cmd)
-        //      chanWaitResAndSendMsgTele(cfg.CmdConfig.Led2OffMsgVN.StatusMsg, cfg.CmdConfig.Timeout)
-
-        // case cfg.CmdConfig.Led2OffMsgEN.TokenCode[0], 
-        //      cfg.CmdConfig.Led2OffMsgEN.TokenCode[1]:
-
-        //      sendToSerial(cfg.CmdConfig.Led2OffMsgEN.Cmd)
-        //      chanWaitResAndSendMsgTele(cfg.CmdConfig.Led2OffMsgEN.StatusMsg, cfg.CmdConfig.Timeout)
         default:
             sendToTelegram(cfg.CmdConfig.DefaultRespMsg)
+
     }
+
 }
 
 func handleSerialCmd(cmd string) {
