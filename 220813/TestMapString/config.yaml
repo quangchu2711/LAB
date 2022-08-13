@@ -1,0 +1,29 @@
+MqttConfig        : 
+  Broker          : 'localhost:1883'
+
+  SerialSrcTopic  : 'Serial/COM4/Rx'
+  SerialDstTopic  : 'Serial/COM4/Tx'
+
+  TeleSrcTopic    : 'Telegram/Quang_bot/Rx'
+  TeleDstTopic    : 'Telegram/Quang_bot/Tx'    
+
+CmdConfig:
+
+  ControlLed:
+    - TokenCode        : ['Bật đèn 1', 'Bat den 1']
+      Cmd              : 'ONLED: 1'
+      ResponseMap:
+         '1'           : 'Đèn 1 đã bật'
+         'TIMEOUT'     : 'Quá thời gian điều khiển đèn 1'
+         'ERROR CMD'   : 'Lệnh chưa được cấu hình'
+
+    - TokenCode        : ['Led 1 on', 'LED 1 ON']
+      Cmd              : 'ONLED: 1'
+      ResponseMap:
+         '1'           : 'Led 1 was on'
+         'TIMEOUT'     : 'Led 1 control time exceeded'
+         'ERROR CMD'   : 'Command has not been initialized'  
+
+  DefaultRespMsg       : 'Wrong command. Please try again!'
+  ConnectionLostResMsg : 'Response failed'
+  Timeout              : 3
