@@ -37,7 +37,7 @@ type Command struct {
 
     DefaultRespMsg string
     ConnectionLostResMsg string
-    Timeout time.Duration
+    TickTimeout time.Duration
 }
 
 type FileConfig struct {
@@ -90,7 +90,7 @@ func handleTeleScript(script LedControlCode) {
 
     sendToSerial(script.Cmd)
 
-    resRxChan := readSerialRXChannel(cfg.CmdConfig.Timeout)
+    resRxChan := readSerialRXChannel(cfg.CmdConfig.TickTimeout)
 
     resDataTele, checkKeyExists := script.ResponseMap[resRxChan];
 

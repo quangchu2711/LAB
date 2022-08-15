@@ -92,4 +92,4 @@ CmdConfig:
          'ERROR CMD'   : 'Command has not been initialized'               
 
   DefaultRespMsg       : 'Wrong command. Please try again!'
-  Timeout              : 3
+  TickTimeout          : 3
