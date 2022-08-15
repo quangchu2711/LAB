@@ -92,4 +92,5 @@ CmdConfig:
          'ERROR CMD'   : 'Command has not been initialized'               
 
   DefaultRespMsg       : 'Wrong command. Please try again!'
+  # TimeoutRespMsg       : 'Quá thời gian, không nhận được phản hồi từ thiết bị'
   TickTimeout          : 3

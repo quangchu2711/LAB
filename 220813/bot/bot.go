@@ -86,7 +86,7 @@ func readSerialRXChannel(timeOut time.Duration) string {
 }
 
 
-func handleTeleScript(script LedControlCode) {
+func handleTeleScript(script *LedControlCode) {
 
     sendToSerial(script.Cmd)
 
@@ -104,17 +104,17 @@ func handleTeleScript(script LedControlCode) {
     }
 } 
 
-func cmdListMapInit(cmdListMap map[string]LedControlCode) {
+func cmdListMapInit(cmdListMap map[string]*LedControlCode) {
     for _, script := range cfg.CmdConfig.ControlLed {
         for _, msgTele := range script.TokenCode {
-            cmdListMap[msgTele] = script
+            cmdListMap[msgTele] = &script
         } 
     }    
 }
 
 func handleTeleCmd(tokenCode string) {
 
-    cmdListMap := map[string]LedControlCode{}
+    cmdListMap := make(map[string]*LedControlCode)
 
     cmdListMapInit(cmdListMap)
 
