@@ -11,12 +11,20 @@ MqttConfig        :
 CmdConfig:
 
   ControlLedVN:
-    - TokenCode: ['Bật đèn 1', 'Bat den 1', 'bật đèn 1', 'bat den 1']
+    - TokenCode: 
+      - 'Bật đèn 1'
+      - 'Bat den 1'
+      - 'bật đèn 1'
+      - 'bat den 1'
       Cmd              : 'ONLED: 1'
       ResponseMap:
          '1'           : 'Đèn 1 đã bật'
 
-    - TokenCode: ['Tắt đèn 1', 'Tat den 1', 'tắt đèn 1', 'tat den 1']
+    - TokenCode: 
+      - 'Tắt đèn 1'
+      - 'Tat den 1'
+      - 'tắt đèn 1'
+      - 'tat den 1'
       Cmd              : 'OFFLED: 1'
       ResponseMap:
          '0'           : 'Đèn 1 đã tắt'
@@ -45,7 +53,7 @@ CmdConfig:
       - 'LED 1 ON'
       Cmd              : 'ONLED: 1'
       ResponseMap:
-         '1'           : 'Led 1 was on'
+         '1a'           : 'Led 1 was on'
 
     - TokenCode:        
       - 'Led 1 off'
@@ -69,8 +77,8 @@ CmdConfig:
          '0'           : 'Led 2 was off'           
 
   DefaultRespMsg       : 'Wrong command. Please try again!'
-  TimeoutRespMsgVN     : 'Quá thời gian, không nhận được phản hồi từ thiết bị'
-  TimeoutRespMsgEN     : 'Time out, no response from device'
   ErrorCmdVN           : 'Lệnh chưa được cấu hình'        
   ErrorCmdEN           : 'Command has not been initialized'    
+  TimeoutRespMsgVN     : 'Quá thời gian, không nhận được phản hồi từ thiết bị'
+  TimeoutRespMsgEN     : 'Time out, no response from device'
   TickTimeout          : 3

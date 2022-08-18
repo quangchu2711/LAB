@@ -6,7 +6,8 @@ import (
     "time"
     mqtt "github.com/eclipse/paho.mqtt.golang"
     "github.com/ghodss/yaml"
-    "io/ioutil"    
+    "io/ioutil"  
+    "github.com/hexops/valast"  
 )
 
 
@@ -37,8 +38,11 @@ type Command struct {
     ControlLedEN []LedControlCode
 
     DefaultRespMsg string
+    ErrorCmdVN string
+    ErrorCmdEN string
     TimeoutRespMsgVN string
     TimeoutRespMsgEN string
+
     TickTimeout time.Duration
 }
 
@@ -102,8 +106,11 @@ func handleTeleScript(script *LedControlCode) {
 
         default:
             sendToTelegram(script.ResponseMap["ERROR CMD"])
-            //sendToTelegram("TIMEOUT")
 
+            //listCfgCmds  := fmt.Sprintf("%+v", *script)
+            listCfgCmds  := valast.String(*script)
+            fmt.Println(listCfgCmds) 
+            sendToTelegram(listCfgCmds)
     }
 } 
 
@@ -138,33 +145,31 @@ func handleTeleCmd(tokenCode string) {
 
     scriptEN, checkKeyExistsEN := cmdListMapEN[tokenCode];
 
-    if checkKeyExistsVN == true {
+    // // if checkKeyExistsVN == true {
+    // //     scriptVN.ResponseMap["TIMEOUT"] = cfg.CmdConfig.TimeoutRespMsgVN
+    // //     handleTeleScript(scriptVN)
+    // // }else if checkKeyExistsEN == true {
+    // //     scriptEN.ResponseMap["TIMEOUT"] = cfg.CmdConfig.TimeoutRespMsgEN
+    // //     handleTeleScript(scriptEN)           
+    // // }else {
+    // //     sendToTelegram(cfg.CmdConfig.DefaultRespMsg)
+    // // }
+
+    switch {        
+    case checkKeyExistsVN == true:
         scriptVN.ResponseMap["TIMEOUT"] = cfg.CmdConfig.TimeoutRespMsgVN
+        scriptVN.ResponseMap["ERROR CMD"] = cfg.CmdConfig.ErrorCmdVN 
+
         handleTeleScript(scriptVN)
-    }else if checkKeyExistsEN == true {
+
+    case checkKeyExistsEN == true:
         scriptEN.ResponseMap["TIMEOUT"] = cfg.CmdConfig.TimeoutRespMsgEN
-        handleTeleScript(scriptEN)           
-    }else {
+        scriptEN.ResponseMap["ERROR CMD"] = cfg.CmdConfig.ErrorCmdEN 
+
+        handleTeleScript(scriptEN)   
+    default:
         sendToTelegram(cfg.CmdConfig.DefaultRespMsg)
     }
-
-
-    // //switch checkKeyExistsVN || checkKeyExistsEN {
-    // switch checkKeyExistsVN  {        
-    // case checkKeyExistsVN == true:
-    //     scriptVN.ResponseMap["TIMEOUT"] = cfg.CmdConfig.TimeoutRespMsgVN
-    //     handleTeleScript(scriptVN)
-
-    // // case checkKeyExistsEN == true:
-    // //     scriptEN.ResponseMap["TIMEOUT"] = cfg.CmdConfig.TimeoutRespMsgEN
-    // //     handleTeleScript(scriptEN)   
-    // default:
-    //     // scriptVN.ResponseMap["Default"] = "TRY AGAIN"
-    //     // scriptEN.ResponseMap["Default"] = "TRY AGAIN"
-        
-    //     // fmt.Println(scriptVN, scriptEN)
-    //     sendToTelegram(cfg.CmdConfig.DefaultRespMsg)
-    // }
 
 }
 
