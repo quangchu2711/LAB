@@ -101,33 +101,33 @@ func handleTeleScript(script *LedControlCode, chatCmd string) {
             sendToTelegram(resDataTele)
 
         default:
-            sendToTelegram(script.ChatResponseMap["UnknowCmd"])
+            sendToTelegram(cfg.CmdConfig.DefaultRespMsg["ErrorCmd"])
     }
 } 
 
 func cmdListMapInit(controlLedArr []LedControlCode,
-                    cmdListMap map[string]*LedControlCode,
                     resMsgTimeout string,
-                    resMsgUnknowCmd string) {
+                    resMsgUnknowCmd string) map[string]*LedControlCode {
 
-        var listChatCmds string 
+    cmdListMap := make(map[string]*LedControlCode)
 
-        for i := 0 ; i < len(controlLedArr); i++ {
-            for j := 0; j < len(controlLedArr[i].ChatCmd); j++ {
-                cmdListMap[controlLedArr[i].ChatCmd[j]] = &controlLedArr[i]
-                listChatCmds += "\n" + controlLedArr[i].ChatCmd[j] 
+    var listChatCmds string 
+    for i := 0 ; i < len(controlLedArr); i++ {
+        for j := 0; j < len(controlLedArr[i].ChatCmd); j++ {
+            cmdListMap[controlLedArr[i].ChatCmd[j]] = &controlLedArr[i]
         }
-        // listCfgChatCmds += listChatCmds
+        listChatCmds += "\n" + controlLedArr[i].ChatCmd[0] 
+    }
 
 
-        //Add Timeout, UnknowCmd
-        for _, controlLed :=range controlLedArr {
-            controlLed.ChatResponseMap["Timeout"] = resMsgTimeout
-            controlLed.ChatResponseMap["UnknowCmd"] = resMsgUnknowCmd + listChatCmds           
-        }         
+    //Add Timeout, UnknowCmd
+    for _, controlLed :=range controlLedArr {
+        controlLed.ChatResponseMap["Timeout"] =  cfg.CmdConfig.DefaultRespMsg[resMsgTimeout] 
+        controlLed.ChatResponseMap["UnknowCmd"] = cfg.CmdConfig.DefaultRespMsg[resMsgUnknowCmd] + listChatCmds           
+    } 
 
-    }      
-}
+    return cmdListMap      
+}      
 
 func handleTeleCmd(chatCmd string) {
 
@@ -143,7 +143,8 @@ func handleTeleCmd(chatCmd string) {
         handleTeleScript(scriptEN, chatCmd)   
     default: 
         // sendToTelegram(cfg.CmdConfig.DefaultRespMsg["ErrorCmd"] + "\n" + listCfgChatCmds)
-        sendToTelegram(cfg.CmdConfig.DefaultRespMsg["ErrorCmd"])
+        //sendToTelegram(cfg.CmdConfig.DefaultRespMsg["UnknowCmdVN"] + listChatCmds)
+        sendToTelegram(cfg.CmdConfig.ControlLedVN[0].ChatResponseMap["UnknowCmd"])
     }
 
 }
@@ -191,19 +192,14 @@ func main() {
     serialRXChannel = make(chan string, 1)
 
     yamlFileHandle()
-
-    cmdListMapVN = make(map[string]*LedControlCode)
-    cmdListMapEN = make(map[string]*LedControlCode)
     
-    cmdListMapInit(cfg.CmdConfig.ControlLedVN, 
-                   cmdListMapVN, 
-                   cfg.CmdConfig.DefaultRespMsg["TimeoutVN"],
-                   cfg.CmdConfig.DefaultRespMsg["UnknowCmdVN"])
+    cmdListMapVN = cmdListMapInit(cfg.CmdConfig.ControlLedVN, 
+                   "TimeoutVN",
+                   "UnknowCmdVN")
 
-    cmdListMapInit(cfg.CmdConfig.ControlLedEN, 
-                    cmdListMapEN, 
-                    cfg.CmdConfig.DefaultRespMsg["TimeoutEN"],
-                    cfg.CmdConfig.DefaultRespMsg["UnknowCmdEN"])
+    cmdListMapEN = cmdListMapInit(cfg.CmdConfig.ControlLedEN, 
+                    "TimeoutEN",
+                    "UnknowCmdEN")
 
 
     mqttClientHandleTele = mqttBegin(cfg.MqttConfig.Broker, &messageTelePubHandler)
