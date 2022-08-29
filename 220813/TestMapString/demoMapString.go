@@ -87,19 +87,19 @@ func main() {
 
     yamlFileHandle()
 
-    cmdList := map[string]LedControlCode{}
+    // cmdList := map[string]LedControlCode{}
 
-    for _, script := range cfg.CmdConfig.ControlLed {
-        //fmt.Println(key, value)
-        for _, msgTele := range script.TokenCode {
-            //fmt.Println(msgTele)
-            cmdList[msgTele] = script
-            fmt.Println(cmdList[msgTele].TokenCode)
-            fmt.Println("===========")
-        } 
-        //fmt.Println(script.TokenCode[0])
+    // for _, script := range cfg.CmdConfig.ControlLed {
+    //     //fmt.Println(key, value)
+    //     for _, msgTele := range script.TokenCode {
+    //         //fmt.Println(msgTele)
+    //         cmdList[msgTele] = script
+    //         fmt.Println(cmdList[msgTele].TokenCode)
+    //         fmt.Println("===========")
+    //     } 
+    //     //fmt.Println(script.TokenCode[0])
 
-    }
+    // }
 
 
     // cmdList := map[string]LedControlCode{}

@@ -7,7 +7,7 @@ import (
     mqtt "github.com/eclipse/paho.mqtt.golang"
     "github.com/ghodss/yaml"
     "io/ioutil"  
-    "github.com/hexops/valast"  
+    // "github.com/hexops/valast"  
 )
 
 
@@ -28,9 +28,11 @@ type Mqtt struct {
 
 
 type LedControlCode struct {
-    TokenCode []string
-    Cmd string
-    ResponseMap map[string]string
+    ChatCmd []string
+    DeviceCmd string
+    ChatResponseMap map[string]string
+    ChatResponseUNKNOWNCMD []string
+    ChatResponseTIMEOUT string
 }
 
 type Command struct {
@@ -91,82 +93,78 @@ func readSerialRXChannel(timeOut time.Duration) string {
     }
 }
 
+// func createResponseUnknowCmd () string {
+//     var listChatCmds string 
+//     for _, str := range script.ChatCmd {
+//         listChatCmds += "\n" + str
+//     }
+// }
 
-func handleTeleScript(script *LedControlCode) {
+func handleTeleScript(script *LedControlCode, chatCmd string) {
 
-    sendToSerial(script.Cmd)
+    sendToSerial(script.DeviceCmd)
 
     resRxChan := readSerialRXChannel(cfg.CmdConfig.TickTimeout)
 
-    resDataTele, checkKeyExists := script.ResponseMap[resRxChan];
+    resDataTele, checkKeyExists := script.ChatResponseMap[resRxChan];
 
     switch checkKeyExists {
         case true:
             sendToTelegram(resDataTele)
 
         default:
-            sendToTelegram(script.ResponseMap["ERROR CMD"])
+            //sendToTelegram(script.ChatResponseMap["ERROR CMD"])
 
             //listCfgCmds  := fmt.Sprintf("%+v", *script)
-            listCfgCmds  := valast.String(*script)
-            fmt.Println(listCfgCmds) 
-            sendToTelegram(listCfgCmds)
+            var listChatCmds string 
+            for _, str := range script.ChatCmd {
+                if str != chatCmd {
+                    listChatCmds += "\n" + str
+                }else {
+                    continue
+                }
+            }
+
+            //listCfgCmds  := valast.String(*script)
+            fmt.Println(listChatCmds) 
+            sendToTelegram(script.ChatResponseMap["ERROR CMD"] + listChatCmds)
     }
 } 
 
 func cmdListMapInit(controlLedArr []LedControlCode,
                     cmdListMap map[string]*LedControlCode) {
-    // for _, script := range *controlLedArr {
-    //     for _, msgTele := range script.TokenCode {
-    //         cmdListMap[msgTele] = &script
-    //     } 
-    // }
 
         for i := 0 ; i < len(controlLedArr); i++ {
-            for j := 0; j < len(controlLedArr[i].TokenCode); j++ {
-                cmdListMap[controlLedArr[i].TokenCode[j]] = &controlLedArr[i]  
+            for j := 0; j < len(controlLedArr[i].ChatCmd); j++ {
+                cmdListMap[controlLedArr[i].ChatCmd[j]] = &controlLedArr[i]  
         }  
     }      
 }
 
-func handleTeleCmd(tokenCode string) {
+func handleTeleCmd(chatCmd string) {
 
     cmdListMapVN := make(map[string]*LedControlCode)
-    cmdListMapInit(cfg.CmdConfig.ControlLedVN, cmdListMapVN)
-
     cmdListMapEN := make(map[string]*LedControlCode)
+    
+    cmdListMapInit(cfg.CmdConfig.ControlLedVN, cmdListMapVN)
     cmdListMapInit(cfg.CmdConfig.ControlLedEN, cmdListMapEN)
 
-    // var checkKeyExistsVN bool
-    // var scriptVN *LedControlCode
-    // scriptVN = &LedControlCode{}
+    scriptVN, checkKeyExistsVN := cmdListMapVN[chatCmd];
 
-    scriptVN, checkKeyExistsVN := cmdListMapVN[tokenCode];
-
-    scriptEN, checkKeyExistsEN := cmdListMapEN[tokenCode];
-
-    // // if checkKeyExistsVN == true {
-    // //     scriptVN.ResponseMap["TIMEOUT"] = cfg.CmdConfig.TimeoutRespMsgVN
-    // //     handleTeleScript(scriptVN)
-    // // }else if checkKeyExistsEN == true {
-    // //     scriptEN.ResponseMap["TIMEOUT"] = cfg.CmdConfig.TimeoutRespMsgEN
-    // //     handleTeleScript(scriptEN)           
-    // // }else {
-    // //     sendToTelegram(cfg.CmdConfig.DefaultRespMsg)
-    // // }
+    scriptEN, checkKeyExistsEN := cmdListMapEN[chatCmd];
 
     switch {        
     case checkKeyExistsVN == true:
-        scriptVN.ResponseMap["TIMEOUT"] = cfg.CmdConfig.TimeoutRespMsgVN
-        scriptVN.ResponseMap["ERROR CMD"] = cfg.CmdConfig.ErrorCmdVN 
+        scriptVN.ChatResponseMap["TIMEOUT"] = cfg.CmdConfig.TimeoutRespMsgVN
+        scriptVN.ChatResponseMap["ERROR CMD"] = cfg.CmdConfig.ErrorCmdVN 
 
-        handleTeleScript(scriptVN)
+        handleTeleScript(scriptVN, chatCmd)
 
     case checkKeyExistsEN == true:
-        scriptEN.ResponseMap["TIMEOUT"] = cfg.CmdConfig.TimeoutRespMsgEN
-        scriptEN.ResponseMap["ERROR CMD"] = cfg.CmdConfig.ErrorCmdEN 
+        scriptEN.ChatResponseMap["TIMEOUT"] = cfg.CmdConfig.TimeoutRespMsgEN
+        scriptEN.ChatResponseMap["ERROR CMD"] = cfg.CmdConfig.ErrorCmdEN 
 
-        handleTeleScript(scriptEN)   
+        handleTeleScript(scriptEN, chatCmd)   
     default:
         sendToTelegram(cfg.CmdConfig.DefaultRespMsg)
     }

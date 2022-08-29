@@ -33,7 +33,8 @@ type LedControlCode struct {
 }
 
 type Command struct {
-    ControlLed []LedControlCode
+    ControlLedVN []LedControlCode
+    ControlLedEN []LedControlCode
 
     DefaultRespMsg string
     TimeoutRespMsgVN string
@@ -47,7 +48,6 @@ type FileConfig struct {
 }
 
 var cfg FileConfig
-var cmdListMap map[string]*LedControlCode
 
 func yamlFileHandle() {
     yfile, err := ioutil.ReadFile("config.yaml")
@@ -102,45 +102,63 @@ func handleTeleScript(script *LedControlCode) {
 
         default:
             sendToTelegram(script.ResponseMap["ERROR CMD"])
+            //sendToTelegram("TIMEOUT")
 
     }
 } 
 
-func cmdListMapInit(cmdListMap map[string]*LedControlCode) {
-    script := cfg.CmdConfig.ControlLed
-    for i := 0 ; i < len(script); i++ {
-        fmt.Println("======================") 
-        //fmt.Println(script)
-        for j := 0; j < len(script[i].TokenCode); j++ {
-            cmdListMap[script[i].TokenCode[j]] = &script[i]  
-        }
-        // // for _, msgTele := range script.TokenCode {
-        // //     fmt.Println("-------------------") 
-        // //     fmt.Println(msgTele, script) 
-        // //     var pCopy *LedControlCode
-        // //     pCopy =  &script   
-        // //     cmdListMap[msgTele] = pCopy
-        // // } 
-    } 
-    fmt.Println("+++++++++++++++++++++\n") 
-
-    for key, value := range cmdListMap {
-        fmt.Println(key, value)
-    }  
+func cmdListMapInit(controlLedArr *[]LedControlCode,
+                    cmdListMap map[string]*LedControlCode) {
+    for _, script := range *controlLedArr {
+        for _, msgTele := range script.TokenCode {
+            cmdListMap[msgTele] = &script
+        } 
+    }    
 }
 
 func handleTeleCmd(tokenCode string) {
 
-    script, checkKeyExists := cmdListMap[tokenCode];
+    cmdListMapVN := make(map[string]*LedControlCode)
+    cmdListMapInit(&cfg.CmdConfig.ControlLedVN, cmdListMapVN)
 
-    switch checkKeyExists {
-        case true:
-            handleTeleScript(script)
+    cmdListMapEN := make(map[string]*LedControlCode)
+    cmdListMapInit(&cfg.CmdConfig.ControlLedEN, cmdListMapEN)
 
-        default:
-            sendToTelegram(cfg.CmdConfig.DefaultRespMsg)
+    var checkKeyExistsVN bool
+    var scriptVN *LedControlCode
+    scriptVN = &LedControlCode{}
 
+    scriptVN, checkKeyExistsVN = cmdListMapVN[tokenCode];
+
+    scriptEN, checkKeyExistsEN := cmdListMapEN[tokenCode];
+
+    if checkKeyExistsVN == true {
+        scriptVN.ResponseMap["TIMEOUT"] = cfg.CmdConfig.TimeoutRespMsgVN
+        handleTeleScript(scriptVN)
+    }else if checkKeyExistsEN == true {
+        scriptEN.ResponseMap["TIMEOUT"] = cfg.CmdConfig.TimeoutRespMsgEN
+        handleTeleScript(scriptEN)           
+    }else {
+        sendToTelegram(cfg.CmdConfig.DefaultRespMsg)
     }
+
+
+    // //switch checkKeyExistsVN || checkKeyExistsEN {
+    // switch checkKeyExistsVN  {        
+    // case checkKeyExistsVN == true:
+    //     scriptVN.ResponseMap["TIMEOUT"] = cfg.CmdConfig.TimeoutRespMsgVN
+    //     handleTeleScript(scriptVN)
+
+    // // case checkKeyExistsEN == true:
+    // //     scriptEN.ResponseMap["TIMEOUT"] = cfg.CmdConfig.TimeoutRespMsgEN
+    // //     handleTeleScript(scriptEN)   
+    // default:
+    //     // scriptVN.ResponseMap["Default"] = "TRY AGAIN"
+    //     // scriptEN.ResponseMap["Default"] = "TRY AGAIN"
+        
+    //     // fmt.Println(scriptVN, scriptEN)
+    //     sendToTelegram(cfg.CmdConfig.DefaultRespMsg)
+    // }
 
 }
 
@@ -182,16 +200,11 @@ func mqttBegin(broker string, messagePubHandler *mqtt.MessageHandler) mqtt.Clien
     return client
 }
 
-
 func main() {
 
     serialRXChannel = make(chan string, 1)
 
     yamlFileHandle()
-
-    cmdListMap = map[string]*LedControlCode{}
-
-    cmdListMapInit(cmdListMap)
 
     mqttClientHandleTele = mqttBegin(cfg.MqttConfig.Broker, &messageTelePubHandler)
 

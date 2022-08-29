@@ -19,8 +19,6 @@ CmdConfig:
       Cmd              : 'ONLED: 1'
       ResponseMap:
          '1'           : 'Đèn 1 đã bật'
-         'TIMEOUT'     : 'Quá thời gian điều khiển đèn 1'
-         'ERROR CMD'   : 'Lệnh chưa được cấu hình'
 
     - TokenCode:        
       - 'Led 1 on'
@@ -28,8 +26,6 @@ CmdConfig:
       Cmd              : 'ONLED: 1'
       ResponseMap:
          '1'           : 'Led 1 was on'
-         'TIMEOUT'     : 'Led 1 control time exceeded'
-         'ERROR CMD'   : 'Command has not been initialized'  
 
     - TokenCode:
       - 'Tắt đèn 1'
@@ -39,17 +35,13 @@ CmdConfig:
       Cmd              : 'OFFLED: 1'
       ResponseMap:
          '0'           : 'Đèn 1 đã tắt'
-         'TIMEOUT'     : 'Quá thời gian điều khiển đèn 1'
-         'ERROR CMD'   : 'Lệnh chưa được cấu hình'
 
     - TokenCode:        
       - 'Led 1 off'
       - 'LED 1 OFF'
       Cmd              : 'OFFLED: 1'
       ResponseMap:
-         '0'           : 'Led 1 was off'
-         'TIMEOUT'     : 'Led 1 control time exceeded'
-         'ERROR CMD'   : 'Command has not been initialized'           
+         '0'           : 'Led 1 was off'        
 
     - TokenCode: 
       - 'Bật đèn 2'
@@ -59,8 +51,6 @@ CmdConfig:
       Cmd              : 'ONLED: 2'
       ResponseMap:
          '1'           : 'Đèn 2 đã bật'
-         'TIMEOUT'     : 'Quá thời gian điều khiển đèn 2'
-         'ERROR CMD'   : 'Lệnh chưa được cấu hình'
 
     - TokenCode:        
       - 'Led 2 on'
@@ -68,8 +58,6 @@ CmdConfig:
       Cmd              : 'ONLED: 2'
       ResponseMap:
          '1'           : 'Led 2 was on'
-         'TIMEOUT'     : 'Led 2 control time exceeded'
-         'ERROR CMD'   : 'Command has not been initialized'   
 
     - TokenCode: 
       - 'Tắt đèn 2'
@@ -79,18 +67,17 @@ CmdConfig:
       Cmd              : 'OFFLED: 2'
       ResponseMap:
          '0'           : 'Đèn 2 đã tắt'
-         'TIMEOUT'     : 'Quá thời gian điều khiển đèn 2'
-         'ERROR CMD'   : 'Lệnh chưa được cấu hình'
 
     - TokenCode: 
       - 'Led 2 off'
       - 'LED 2 OFF'
       Cmd              : 'OFFLED: 2'
       ResponseMap:
-         '0'           : 'Led 2 was off'
-         'TIMEOUT'     : 'Led 2 control time exceeded'
-         'ERROR CMD'   : 'Command has not been initialized'               
+         '0'           : 'Led 2 was off'           
 
   DefaultRespMsg       : 'Wrong command. Please try again!'
-  # TimeoutRespMsg       : 'Quá thời gian, không nhận được phản hồi từ thiết bị'
+  TimeoutRespMsgVN     : 'Quá thời gian, không nhận được phản hồi từ thiết bị'
+  TimeoutRespMsgEN     : 'Time out, no response from device'
+  ErrorCmdVN           : 'Lệnh chưa được cấu hình'        
+  ErrorCmdEN           : 'Command has not been initialized'    
   TickTimeout          : 3
