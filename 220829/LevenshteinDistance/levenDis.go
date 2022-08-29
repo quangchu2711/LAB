@@ -87,7 +87,7 @@ func main() {
 	// s1 := "sitting"
 	// fmt.Println("\nKhoang cach: ",levenDis(s1, s2))
 	strArr := [12]string{"Bật đèn 1", "Tắt đèn 1", "bật đèn 1", "tắt đèn 1", "Led 1 on", "Led 1 off", 
-						 "Bật đèn 2", "Tắt đèn 2", "bật đèn 2", "tắt đèn 2", "Led 2 on", "Led 2 off"}
+							"Bật đèn 2", "Tắt đèn 2", "bật đèn 2", "tắt đèn 2", "Led 2 on", "Led 2 off"}
 
 	fmt.Println("Enter str: ")
 
