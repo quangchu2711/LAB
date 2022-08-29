@@ -38,7 +38,7 @@ var messagePubHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Me
     bot.Send(message)
 }
 
-func yaml_file_handle() {
+func yamlFileHandle() {
     yfile, err := ioutil.ReadFile("config.yaml")
 
     if err != nil {
@@ -55,7 +55,7 @@ func yaml_file_handle() {
 
 }
 
-func mqtt_begin(broker string) mqtt.Client {
+func mqttBegin(broker string) mqtt.Client {
     var opts *mqtt.ClientOptions = new(mqtt.ClientOptions)
 
     opts = mqtt.NewClientOptions()
@@ -72,7 +72,7 @@ func mqtt_begin(broker string) mqtt.Client {
 }
 
 
-func telegram_bot_begin(bot_token string) (tgbotapi.UpdatesChannel, *tgbotapi.BotAPI) {    
+func telegramBotBegin(bot_token string) (tgbotapi.UpdatesChannel, *tgbotapi.BotAPI) {    
     var error_bot error 
     var error_update error     
     var telegram_bot *tgbotapi.BotAPI
@@ -96,16 +96,16 @@ func telegram_bot_begin(bot_token string) (tgbotapi.UpdatesChannel, *tgbotapi.Bo
 }
 
 func main() {
-    yaml_file_handle()
+    yamlFileHandle()
 
-    mqtt_client := mqtt_begin(cfg.MqttConfig.Broker)
+    mqttClient := mqttBegin(cfg.MqttConfig.Broker)
 
-    mqtt_client.Subscribe(cfg.MqttConfig.TeleDstTopic, 1, nil)
+    mqttClient.Subscribe(cfg.MqttConfig.TeleDstTopic, 1, nil)
 
-    updates, bot = telegram_bot_begin(cfg.TelegramConfig.BotToken)
+    updates, bot = telegramBotBegin(cfg.TelegramConfig.BotToken)
 
     for update := range updates {
-        mqtt_client.Publish(cfg.MqttConfig.TeleSrcTopic, 0, false, update.Message.Text)
+        mqttClient.Publish(cfg.MqttConfig.TeleSrcTopic, 0, false, update.Message.Text)
         fmt.Println(cfg.MqttConfig.TeleSrcTopic + ": " + update.Message.Text)
     }
 }
