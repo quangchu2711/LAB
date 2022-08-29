@@ -205,6 +205,8 @@ func handleTeleCmd(chatCmd string) {
         case "Đúng", "Yes", "dung", "yes":
             handleTeleScript(scriptLanguage, chatCmdLanguage)
             botChatSta = FirstResponse
+        case "Sai", "No", "sai", "no":
+            sendToTelegram("Please try another command !")
         default:
             sendToTelegram(cfg.CmdConfig.DefaultRespMsg["ErrorCmd"])
             botChatSta = FirstResponse
