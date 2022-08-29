@@ -57,7 +57,7 @@ func yaml_file_handle() {
     }  
 }
 
-func serial_begin(port string, baud uint) (io.ReadWriteCloser){
+func serialBegin(port string, baud uint) (io.ReadWriteCloser){
     var options serial.OpenOptions
 
     // Set up options.
@@ -80,7 +80,7 @@ func serial_begin(port string, baud uint) (io.ReadWriteCloser){
     return portDev
 }
 
-func mqtt_begin(broker string) mqtt.Client {
+func mqttBegin(broker string) mqtt.Client {
 
     var opts *mqtt.ClientOptions = new(mqtt.ClientOptions)
 
@@ -100,9 +100,9 @@ func main() {
     //setup
     yaml_file_handle()
 
-    portDevice = serial_begin(cfg.SerialConfig.ComName, cfg.SerialConfig.Baudrate)
+    portDevice = serialBegin(cfg.SerialConfig.ComName, cfg.SerialConfig.Baudrate)
 
-    client := mqtt_begin(cfg.MqttConfig.Broker)
+    client := mqttBegin(cfg.MqttConfig.Broker)
     fmt.Println("Connected")
 
     client.Subscribe(cfg.MqttConfig.SerialDstTopic, 1, nil)
