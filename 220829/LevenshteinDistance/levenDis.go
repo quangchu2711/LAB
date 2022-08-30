@@ -96,11 +96,11 @@ func main() {
     first := scanner.Text()
 
 	minValue := 10
-	resStr := "Khong co"
+	resStr := "Không tìm thấy"
 
 	for i := 0; i < len(strArr); i++ {
-		fmt.Println("KQ: ", levenDis(first, strArr[i]))
-		if levenDis(first, strArr[i]) < minValue {
+		fmt.Println("[",strArr[i],"] :", levenDis(first, strArr[i]))
+		if levenDis(first, strArr[i]) <= minValue {
 			minValue = levenDis(first, strArr[i])
 			resStr = strArr[i]
 		}
