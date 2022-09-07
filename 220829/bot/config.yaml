@@ -83,4 +83,23 @@ CmdConfig:
     'UnknowCmdVN'      : 'Yêu cầu không rõ, bạn có thể thử:'
     'UnknowCmdEN'      : 'Request unknown. You can request:'    
 
-  TickTimeout          : 3
+  BotQuestion:
+    'VN' : 'Có phải bạn muốn : '
+    'EN' : 'Do you want : '
+  BotReply:
+    'No' : 'Please try another command !'
+
+  UserReplyYes:
+    - 'Đúng'
+    - 'đúng'
+    - 'dung'
+    - 'Yes'
+    - 'yes'
+  UserReplyNo:
+    - 'Sai'
+    - 'sai'
+    - 'sai'
+    - 'No'
+    - 'no'   
+
+  TickTimeout: 3

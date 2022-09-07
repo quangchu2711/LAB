@@ -30,11 +30,13 @@ var cfg FileConfig
 
 var bot *tgbotapi.BotAPI
 var updates tgbotapi.UpdatesChannel
+var msgChatId int64
 
 var messagePubHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) {
     fmt.Printf("Received message: [%s] from topic: %s\n", msg.Payload(), msg.Topic())
 
-    message := tgbotapi.NewMessage(cfg.TelegramConfig.IdBotChat, string(msg.Payload()))
+    // message := tgbotapi.NewMessage(cfg.TelegramConfig.IdBotChat, string(msg.Payload()))
+    message := tgbotapi.NewMessage(msgChatId, string(msg.Payload()))
     bot.Send(message)
 }
 
@@ -105,6 +107,8 @@ func main() {
     updates, bot = telegramBotBegin(cfg.TelegramConfig.BotToken)
 
     for update := range updates {
+        // fmt.Printf("Type: %T\n", update.Message.Chat.ID)
+        msgChatId = update.Message.Chat.ID
         mqttClient.Publish(cfg.MqttConfig.TeleSrcTopic, 0, false, update.Message.Text)
         fmt.Println(cfg.MqttConfig.TeleSrcTopic + ": " + update.Message.Text)
     }

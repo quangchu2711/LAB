@@ -7,8 +7,7 @@ import (
     mqtt "github.com/eclipse/paho.mqtt.golang"
     "github.com/ghodss/yaml"
     "io/ioutil"
-    "unicode/utf8"
-    "strings"       
+    "github.com/agnivade/levenshtein" 
 )
 
 type Mqtt struct {
@@ -33,6 +32,10 @@ type Command struct {
     ControlLedEN []LedControlCode
 
     DefaultRespMsg map[string]string
+    BotQuestion map[string]string
+    BotReply map[string]string
+    UserReplyYes []string
+    UserReplyNo []string   
 
     TickTimeout time.Duration
 }
@@ -42,12 +45,12 @@ type FileConfig struct {
     CmdConfig Command
 }
 
-type BotChatResState int
+type UserStatus int
 const (
-    FirstResponse BotChatResState = 0
-    SecondResponse BotChatResState = 1
+    UserSendCmd UserStatus = 0
+    UserReply UserStatus = 1
 )
-var botChatSta BotChatResState = FirstResponse
+var userSta UserStatus = UserSendCmd
 
 var cfg FileConfig
 var mqttClientHandleTele mqtt.Client
@@ -135,43 +138,31 @@ func cmdListMapInit(controlLedArr []LedControlCode,
         cmdStr += "\n" + controlLedArr[i].ChatCmd[0]
     }
     // fmt.Println("=",cmdStr,"=")
-    fmt.Println(">>", listChatCmds, "<<")
+    // fmt.Println(">>", listChatCmds, "<<")
 
     cfg.CmdConfig.DefaultRespMsg[resMsgUnknowCmd] += cmdStr
 
     //Add Timeout, UnknowCmd
     for _, controlLed :=range controlLedArr {
         controlLed.ChatResponseMap["Timeout"] =  cfg.CmdConfig.DefaultRespMsg[resMsgTimeout] 
-        controlLed.ChatResponseMap["UnknowCmd"] = cfg.CmdConfig.DefaultRespMsg[resMsgUnknowCmd]   
     } 
 
     return cmdListMap      
 }
 
-// func handleTeleCmd(chatCmd string) {  
-//     scriptVN, checkKeyExistsVN := cmdListMapVN[chatCmd];
-
-//     scriptEN, checkKeyExistsEN := cmdListMapEN[chatCmd];
-
-//     switch {        
-//     case checkKeyExistsVN == true:
-//         handleTeleScript(scriptVN, chatCmd)
-
-//     case checkKeyExistsEN == true:
-//         handleTeleScript(scriptEN, chatCmd)   
-//     default: 
-//         helpResVN := cfg.CmdConfig.DefaultRespMsg["UnknowCmdVN"]
-//         helpResEN := cfg.CmdConfig.DefaultRespMsg["UnknowCmdEN"]
-
-//         sendToTelegram(helpResVN)
-//         sendToTelegram(helpResEN)
-//     }
-// }
+func stringInSlice(a string, list []string) bool {
+    for _, b := range list {
+        if b == a {
+            return true
+        }
+    }
+    return false
+}
 
 func handleTeleCmd(chatCmd string) {
 
-    switch botChatSta {
-    case FirstResponse:
+    switch userSta {
+    case UserSendCmd:
 
         msgRes := getTheClosestString(chatCmd, listChatCmds)
 
@@ -187,29 +178,37 @@ func handleTeleCmd(chatCmd string) {
 
             switch {        
             case checkKeyExistsVN == true:
-                sendToTelegram("Co phải bạn muốn : " + msgRes + "?")
+                questionVN :=  cfg.CmdConfig.BotQuestion["VN"] + msgRes + "?"
+                sendToTelegram(questionVN)
+                
                 scriptLanguage = scriptVN
                 chatCmdLanguage = msgRes
-                botChatSta = SecondResponse
+                userSta = UserReply
 
             case checkKeyExistsEN == true:
-                sendToTelegram("Do you want: " + msgRes + "?")  
+                questionVN :=  cfg.CmdConfig.BotQuestion["EN"] + msgRes + "?"
+                sendToTelegram(questionVN)
+
                 scriptLanguage = scriptEN
                 chatCmdLanguage = msgRes
-                botChatSta = SecondResponse 
+                userSta = UserReply 
             }
         }       
 
-    case SecondResponse:
-        switch chatCmd {
-        case "Đúng", "Yes", "dung", "yes":
+    case UserReply:
+        checkReplyYes := stringInSlice(chatCmd, cfg.CmdConfig.UserReplyYes)
+        checkReplyNo := stringInSlice(chatCmd, cfg.CmdConfig.UserReplyNo)
+        
+        switch {
+        case checkReplyYes == true:
             handleTeleScript(scriptLanguage, chatCmdLanguage)
-            botChatSta = FirstResponse
-        case "Sai", "No", "sai", "no":
-            sendToTelegram("Please try another command !")
+            userSta = UserSendCmd
+        case checkReplyNo == true:
+            sendToTelegram(cfg.CmdConfig.BotReply["No"])
+            userSta = UserSendCmd
         default:
             sendToTelegram(cfg.CmdConfig.DefaultRespMsg["ErrorCmd"])
-            botChatSta = FirstResponse
+            userSta = UserSendCmd
         }
     }
 }
@@ -258,7 +257,7 @@ func getTheClosestString(str string, strArr[] string) string {
 
     for i := 0; i < len(strArr); i++ {
         // fmt.Println("KQ: ", levenDis(first, strArr[i]))
-        numStep := levenDis(str, strArr[i])
+        numStep := levenshtein.ComputeDistance(str, strArr[i])
         if numStep < minNumStep {
             minNumStep = numStep
             resStr = strArr[i]
@@ -267,73 +266,8 @@ func getTheClosestString(str string, strArr[] string) string {
     return resStr
 }
 
-func levenDis(str1, str2 string) int {  
-    switch {
-    case len(str1) == 0:
-        return utf8.RuneCountInString(str1)
-    case len(str2) == 0:
-        return utf8.RuneCountInString(str2)
-    case str1 == str2:
-        return 0
-    default:
-        /*Add 1 space character at the beginning of the string 
-            and remove duplicate whitespace*/
-        str1 = " " + trimAllSpace(str1)
-        str2 = " " + trimAllSpace(str2)
-
-        /*Use Rune type to store string*/
-        s1 := []rune(str1)
-        s2 := []rune(str2)
-        
-        /*Get the length of the string*/
-        lenS1 := len(s1) 
-        lenS2 := len(s2)
-        
-        /*Algorithm Levenshtein distance*/
-        var disTable [20][20] int
-
-        for i := 0; i < lenS1; i++ {
-            disTable[i][0] = i
-        }
-        for j := 0; j < lenS2; j++ {
-            disTable[0][j] = j
-        }
-
-        cost := 0
-        for i := 1; i < lenS1; i++ {
-            for j := 1; j < lenS2; j++ {
-                if s1[i] == s2[j] {
-                    cost = 0
-                }else {
-                    cost = 1
-                }
-                disTable[i][j] = minimum(disTable[i-1][j] + 1, 
-                                        disTable[i][j-1] + 1, 
-                                        disTable[i-1][j-1] + cost) 
-            }
-        }
-        return disTable[lenS1-1][lenS2-1]
-    }
-}
-
-func minimum(a, b, c int) int {
-    minVal := a
-    if minVal >  b {
-        minVal = b
-    }
-    if minVal >  c {
-        minVal = c
-    }
-    return minVal
-}
-
-func trimAllSpace(s string) string {
-    return strings.Join(strings.Fields(s), " ")
-}
-
-
 func main() {
-    // botChatSta := FirstResponse
+    // userSta := UserSendCmd
 
     serialRXChannel = make(chan string, 1)
 
