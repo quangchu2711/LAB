@@ -139,68 +139,68 @@ func cmdListMapInit(controlLedArr []LedControlCode,
     return cmdListMap      
 }
 
-// func handleControlCmd(chatCmd string) {  
-//     scriptVN, checkKeyExistsVN := cmdListMapVN[chatCmd];
+func handleTeleCmd(chatCmd string) {  
+    scriptVN, checkKeyExistsVN := cmdListMapVN[chatCmd];
 
-//     scriptEN, checkKeyExistsEN := cmdListMapEN[chatCmd];
+    scriptEN, checkKeyExistsEN := cmdListMapEN[chatCmd];
 
-//     switch {        
-//     case checkKeyExistsVN == true:
-//         handleTeleScript(scriptVN, chatCmd)
+    switch {        
+    case checkKeyExistsVN == true:
+        handleTeleScript(scriptVN, chatCmd)
 
-//     case checkKeyExistsEN == true:
-//         handleTeleScript(scriptEN, chatCmd)   
-//     default: 
-//         // sendToTelegram(cfg.CmdConfig.DefaultRespMsg["ErrorCmd"] + "\n" + listCfgChatCmds)
-//         //sendToTelegram(cfg.CmdConfig.DefaultRespMsg["UnknowCmdVN"] + listChatCmds)
-//         //sendToTelegram("Yêu cầu không rõ, bạn có thể thử: " + listCfgChatCmds)
-//         helpResVN := cfg.CmdConfig.DefaultRespMsg["UnknowCmdVN"]
-//         helpResEN := cfg.CmdConfig.DefaultRespMsg["UnknowCmdEN"]
+    case checkKeyExistsEN == true:
+        handleTeleScript(scriptEN, chatCmd)   
+    default: 
+        // sendToTelegram(cfg.CmdConfig.DefaultRespMsg["ErrorCmd"] + "\n" + listCfgChatCmds)
+        //sendToTelegram(cfg.CmdConfig.DefaultRespMsg["UnknowCmdVN"] + listChatCmds)
+        //sendToTelegram("Yêu cầu không rõ, bạn có thể thử: " + listCfgChatCmds)
+        helpResVN := cfg.CmdConfig.DefaultRespMsg["UnknowCmdVN"]
+        helpResEN := cfg.CmdConfig.DefaultRespMsg["UnknowCmdEN"]
 
-//         sendToTelegram(helpResVN)
-//         sendToTelegram(helpResEN)
-//     }
-// }
-
-func handleTeleCmd(chatCmd string) {
-
-    switch botChatSta {
-    case FirstResponse:
-        
-        scriptVN, checkKeyExistsVN := cmdListMapVN[chatCmd];
-        scriptEN, checkKeyExistsEN := cmdListMapEN[chatCmd];
-
-        switch {        
-        case checkKeyExistsVN == true:
-            sendToTelegram("Co phải bạn muốn : " + chatCmd + "?")
-            scriptLanguage = scriptVN
-            chatCmdLanguage = chatCmd
-            botChatSta = SecondResponse
-
-        case checkKeyExistsEN == true:
-            sendToTelegram("Do you want: " + chatCmd + "?")  
-            scriptLanguage = scriptEN
-            chatCmdLanguage = chatCmd
-            botChatSta = SecondResponse
-
-        default: 
-            helpResVN := cfg.CmdConfig.DefaultRespMsg["UnknowCmdVN"]
-            helpResEN := cfg.CmdConfig.DefaultRespMsg["UnknowCmdEN"]
-            sendToTelegram(helpResVN)
-            sendToTelegram(helpResEN)
-        }
-
-    case SecondResponse:
-        switch chatCmd {
-        case "Đúng", "Yes", "dung", "yes":
-            handleTeleScript(scriptLanguage, chatCmdLanguage)
-            botChatSta = FirstResponse
-        default:
-            sendToTelegram(cfg.CmdConfig.DefaultRespMsg["ErrorCmd"])
-            botChatSta = FirstResponse
-        }
+        sendToTelegram(helpResVN)
+        sendToTelegram(helpResEN)
     }
 }
+
+// func handleTeleCmd(chatCmd string) {
+
+//     switch botChatSta {
+//     case FirstResponse:
+        
+//         scriptVN, checkKeyExistsVN := cmdListMapVN[chatCmd];
+//         scriptEN, checkKeyExistsEN := cmdListMapEN[chatCmd];
+
+//         switch {        
+//         case checkKeyExistsVN == true:
+//             sendToTelegram("Co phải bạn muốn : " + chatCmd + "?")
+//             scriptLanguage = scriptVN
+//             chatCmdLanguage = chatCmd
+//             botChatSta = SecondResponse
+
+//         case checkKeyExistsEN == true:
+//             sendToTelegram("Do you want: " + chatCmd + "?")  
+//             scriptLanguage = scriptEN
+//             chatCmdLanguage = chatCmd
+//             botChatSta = SecondResponse
+
+//         default: 
+//             helpResVN := cfg.CmdConfig.DefaultRespMsg["UnknowCmdVN"]
+//             helpResEN := cfg.CmdConfig.DefaultRespMsg["UnknowCmdEN"]
+//             sendToTelegram(helpResVN)
+//             sendToTelegram(helpResEN)
+//         }
+
+//     case SecondResponse:
+//         switch chatCmd {
+//         case "Đúng", "Yes", "dung", "yes":
+//             handleTeleScript(scriptLanguage, chatCmdLanguage)
+//             botChatSta = FirstResponse
+//         default:
+//             sendToTelegram(cfg.CmdConfig.DefaultRespMsg["ErrorCmd"])
+//             botChatSta = FirstResponse
+//         }
+//     }
+// }
 
 func handleSerialCmd(cmd string) {
     serialRXChannel <-cmd
