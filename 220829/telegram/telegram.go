@@ -8,6 +8,9 @@ import (
     tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
     "github.com/ghodss/yaml"
     "io/ioutil"
+    "strings"
+    "strconv"
+    "errors"
 )
 
 type Mqtt struct {
@@ -30,22 +33,27 @@ var cfg FileConfig
 
 var bot *tgbotapi.BotAPI
 var updates tgbotapi.UpdatesChannel
-var msgChatId int64
 
 var messagePubHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) {
     fmt.Printf("Received message: [%s] from topic: %s\n", msg.Payload(), msg.Topic())
 
-    // message := tgbotapi.NewMessage(cfg.TelegramConfig.IdBotChat, string(msg.Payload()))
-    message := tgbotapi.NewMessage(msgChatId, string(msg.Payload()))
-    bot.Send(message)
-}
-
-func yamlFileHandle() {
-    yfile, err := ioutil.ReadFile("config.yaml")
+    groupID, err := getGroupIdTelegram(msg.Topic())
 
     if err != nil {
 
       log.Fatal(err)
+    }
+
+    message := tgbotapi.NewMessage(groupID, string(msg.Payload()))
+    bot.Send(message)
+}
+
+func yamlFileHandle() {
+    yfile, err1 := ioutil.ReadFile("config.yaml")
+
+    if err1 != nil {
+
+      log.Fatal(err1)
     }
 
     err2 := yaml.Unmarshal(yfile, &cfg)
@@ -74,27 +82,33 @@ func mqttBegin(broker string) mqtt.Client {
 }
 
 
-func telegramBotBegin(bot_token string) (tgbotapi.UpdatesChannel, *tgbotapi.BotAPI) {    
-    var error_bot error 
-    var error_update error     
-    var telegram_bot *tgbotapi.BotAPI
-    var telgram_updates tgbotapi.UpdatesChannel
+func telegramBotBegin(bot_token string) (tgbotapi.UpdatesChannel, *tgbotapi.BotAPI) {      
+    var telegramBot *tgbotapi.BotAPI
+    var telgramUpdates tgbotapi.UpdatesChannel
 
-    telegram_bot, error_bot = tgbotapi.NewBotAPI(bot_token)
-    if error_bot != nil {
-        log.Panic(error_bot)
-    }
+    telegramBot, _ = tgbotapi.NewBotAPI(bot_token)
 
-    log.Printf("Authorized on account %s", telegram_bot.Self.UserName)
+    log.Printf("Authorized on account %s", telegramBot.Self.UserName)
 
     u := tgbotapi.NewUpdate(0)
-    telgram_updates, error_update = telegram_bot.GetUpdatesChan(u)
+    telgramUpdates, _ = telegramBot.GetUpdatesChan(u)
 
-    if error_update != nil {
-        log.Panic(error_update)
-    }         
+    return telgramUpdates, telegramBot     
+}
+func getGroupIdTelegram (topic string) (int64, error) {
+    topicItem := strings.Split(topic, "/")
+    err := "Incorrect topic format"
 
-    return telgram_updates, telegram_bot     
+    if topicItem[0] != "Telegram" {
+        return 0, errors.New(err)
+    }else {
+        if topicItem[2] != "Tx" {
+            return 0, errors.New(err)
+        }else {
+            groupID, _ := strconv.Atoi(topicItem[1])
+            return int64(groupID), nil
+        }
+    }
 }
 
 func main() {
@@ -107,9 +121,13 @@ func main() {
     updates, bot = telegramBotBegin(cfg.TelegramConfig.BotToken)
 
     for update := range updates {
-        // fmt.Printf("Type: %T\n", update.Message.Chat.ID)
-        msgChatId = update.Message.Chat.ID
-        mqttClient.Publish(cfg.MqttConfig.TeleSrcTopic, 0, false, update.Message.Text)
+
+        groupID := strconv.FormatInt(int64(update.Message.Chat.ID), 10)
+        // fmt.Println("[", groupID,"]")
+        teleSrcTopic := strings.Replace(cfg.MqttConfig.TeleSrcTopic, "GroupID", groupID, 1)
+        // fmt.Println("[", TeleSrcTopic,"]")
+         
+        mqttClient.Publish(teleSrcTopic, 0, false, update.Message.Text)
         fmt.Println(cfg.MqttConfig.TeleSrcTopic + ": " + update.Message.Text)
     }
 }

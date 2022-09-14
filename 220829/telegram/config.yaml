@@ -5,5 +5,6 @@ TelegramConfig    :
 
 MqttConfig        : 
   Broker          : 'localhost:1883'
-  TeleSrcTopic    : 'Telegram/Quang_bot/Rx'
-  TeleDstTopic    : 'Telegram/Quang_bot/Tx'  
+  TeleSrcTopic    : 'Telegram/GroupID/Rx'
+  TeleDstTopic    : 'Telegram/+/Tx'  
+
