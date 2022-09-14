@@ -5,8 +5,8 @@ MqttConfig        :
   SerialSrcTopic  : 'Serial/COM4/Rx'
   SerialDstTopic  : 'Serial/COM4/Tx'
 
-  TeleSrcTopic    : 'Telegram/Quang_bot/Rx'
-  TeleDstTopic    : 'Telegram/Quang_bot/Tx'    
+  TeleSrcTopic    : 'Telegram/+/Rx'
+  TeleDstTopic    : 'Telegram/GroupID/Tx'    
 
 CmdConfig:
 

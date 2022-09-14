@@ -7,7 +7,9 @@ import (
     mqtt "github.com/eclipse/paho.mqtt.golang"
     "github.com/ghodss/yaml"
     "io/ioutil"
-    "github.com/agnivade/levenshtein" 
+    // "github.com/agnivade/levenshtein" 
+    "strings"
+    "errors"
 )
 
 type Mqtt struct {
@@ -32,10 +34,10 @@ type Command struct {
     ControlLedEN []LedControlCode
 
     DefaultRespMsg map[string]string
-    BotQuestion map[string]string
-    BotReply map[string]string
-    UserReplyYes []string
-    UserReplyNo []string   
+    // BotQuestion map[string]string
+    // BotReply map[string]string
+    // UserReplyYes []string
+    // UserReplyNo []string   
 
     TickTimeout time.Duration
 }
@@ -61,8 +63,8 @@ var listCfgChatCmds string
 var cmdListMapVN map[string]*LedControlCode
 var cmdListMapEN map[string]*LedControlCode
 
-var scriptLanguage *LedControlCode
-var chatCmdLanguage string
+// var scriptLanguage *LedControlCode
+// var chatCmdLanguage string
 
 var listChatCmds[] string 
 
@@ -85,11 +87,14 @@ func yamlFileHandle() {
 
 
 func sendToSerial(msg string) {
-     mqttClientHandleTele.Publish(cfg.MqttConfig.SerialDstTopic, 0, false, msg)
+    mqttClientHandleTele.Publish(cfg.MqttConfig.SerialDstTopic, 0, false, msg)
 }
 
-func sendToTelegram(msg string) {
-     mqttClientHandleSerial.Publish(cfg.MqttConfig.TeleDstTopic, 0, false, msg)
+func sendToTelegram(groupID string, msg string) {
+    // fmt.Println(groupID)
+    teleDstTopic := strings.Replace(cfg.MqttConfig.TeleDstTopic, "GroupID", groupID, 1)
+    // fmt.Println(teleDstTopic)
+    mqttClientHandleSerial.Publish(teleDstTopic, 0, false, msg)
 }
 
 func readSerialRXChannel(timeOut time.Duration) string {
@@ -104,7 +109,7 @@ func readSerialRXChannel(timeOut time.Duration) string {
     }
 }
 
-func handleTeleScript(script *LedControlCode, chatCmd string) {
+func handleTeleScript(script *LedControlCode, groupID string, chatCmd string) {
 
     sendToSerial(script.DeviceCmd)
 
@@ -114,10 +119,10 @@ func handleTeleScript(script *LedControlCode, chatCmd string) {
 
     switch checkKeyExists {
         case true:
-            sendToTelegram(resDataTele)
+            sendToTelegram(groupID, resDataTele)
 
         default:
-            sendToTelegram(cfg.CmdConfig.DefaultRespMsg["ErrorCmd"])
+            sendToTelegram(groupID, cfg.CmdConfig.DefaultRespMsg["ErrorCmd"])
     }
 } 
 
@@ -134,15 +139,11 @@ func cmdListMapInit(controlLedArr []LedControlCode,
             cmdListMap[controlLedArr[i].ChatCmd[j]] = &controlLedArr[i]
             listChatCmds = append(listChatCmds, controlLedArr[i].ChatCmd[j])
         }
-        // listChatCmds = append(listChatCmds, controlLedArr[i].ChatCmd[0])
         cmdStr += "\n" + controlLedArr[i].ChatCmd[0]
     }
-    // fmt.Println("=",cmdStr,"=")
-    // fmt.Println(">>", listChatCmds, "<<")
 
     cfg.CmdConfig.DefaultRespMsg[resMsgUnknowCmd] += cmdStr
 
-    //Add Timeout, UnknowCmd
     for _, controlLed :=range controlLedArr {
         controlLed.ChatResponseMap["Timeout"] =  cfg.CmdConfig.DefaultRespMsg[resMsgTimeout] 
     } 
@@ -150,65 +151,102 @@ func cmdListMapInit(controlLedArr []LedControlCode,
     return cmdListMap      
 }
 
-func stringInSlice(a string, list []string) bool {
-    for _, b := range list {
-        if b == a {
-            return true
-        }
+func handleTeleCmd(groupID string, chatCmd string) {  
+
+    scriptVN, checkKeyExistsVN := cmdListMapVN[chatCmd];
+
+    scriptEN, checkKeyExistsEN := cmdListMapEN[chatCmd];
+
+    switch {        
+    case checkKeyExistsVN == true:
+        handleTeleScript(scriptVN, groupID, chatCmd)
+
+    case checkKeyExistsEN == true:
+        handleTeleScript(scriptEN, groupID, chatCmd)   
+    default: 
+        helpResVN := cfg.CmdConfig.DefaultRespMsg["UnknowCmdVN"]
+        helpResEN := cfg.CmdConfig.DefaultRespMsg["UnknowCmdEN"]
+
+        sendToTelegram(groupID, helpResVN)
+        sendToTelegram(groupID, helpResEN)
     }
-    return false
 }
 
-func handleTeleCmd(chatCmd string) {
+// func stringInSlice(a string, list []string) bool {
+//     for _, b := range list {
+//         if b == a {
+//             return true
+//         }
+//     }
+//     return false
+// }
 
-    switch userSta {
-    case UserSendCmd:
+// func handleTeleCmd(chatCmd string, groupID string) {
 
-        msgRes := getTheClosestString(chatCmd, listChatCmds)
+//     switch userSta {
+//     case UserSendCmd:
 
-        switch msgRes {
-        case "NULL":
-            helpResVN := cfg.CmdConfig.DefaultRespMsg["UnknowCmdVN"]
-            helpResEN := cfg.CmdConfig.DefaultRespMsg["UnknowCmdEN"]
-            sendToTelegram(helpResVN)
-            sendToTelegram(helpResEN)
-        default:
-            scriptVN, checkKeyExistsVN := cmdListMapVN[msgRes];
-            scriptEN, checkKeyExistsEN := cmdListMapEN[msgRes];
+//         msgRes := getTheClosestString(chatCmd, listChatCmds)
 
-            switch {        
-            case checkKeyExistsVN == true:
-                questionVN :=  cfg.CmdConfig.BotQuestion["VN"] + msgRes + "?"
-                sendToTelegram(questionVN)
+//         switch msgRes {
+//         case "NULL":
+//             helpResVN := cfg.CmdConfig.DefaultRespMsg["UnknowCmdVN"]
+//             helpResEN := cfg.CmdConfig.DefaultRespMsg["UnknowCmdEN"]
+//             sendToTelegram(groupID, helpResVN)
+//             sendToTelegram(groupID, helpResEN)
+//         default:
+//             scriptVN, checkKeyExistsVN := cmdListMapVN[msgRes];
+//             scriptEN, checkKeyExistsEN := cmdListMapEN[msgRes];
+
+//             switch {        
+//             case checkKeyExistsVN == true:
+//                 questionVN :=  cfg.CmdConfig.BotQuestion["VN"] + msgRes + "?"
+//                 sendToTelegram(groupID, questionVN)
                 
-                scriptLanguage = scriptVN
-                chatCmdLanguage = msgRes
-                userSta = UserReply
+//                 scriptLanguage = scriptVN
+//                 chatCmdLanguage = msgRes
+//                 userSta = UserReply
 
-            case checkKeyExistsEN == true:
-                questionVN :=  cfg.CmdConfig.BotQuestion["EN"] + msgRes + "?"
-                sendToTelegram(questionVN)
+//             case checkKeyExistsEN == true:
+//                 questionVN :=  cfg.CmdConfig.BotQuestion["EN"] + msgRes + "?"
+//                 sendToTelegram(groupID, questionVN)
 
-                scriptLanguage = scriptEN
-                chatCmdLanguage = msgRes
-                userSta = UserReply 
-            }
-        }       
+//                 scriptLanguage = scriptEN
+//                 chatCmdLanguage = msgRes
+//                 userSta = UserReply 
+//             }
+//         }       
 
-    case UserReply:
-        checkReplyYes := stringInSlice(chatCmd, cfg.CmdConfig.UserReplyYes)
-        checkReplyNo := stringInSlice(chatCmd, cfg.CmdConfig.UserReplyNo)
+//     case UserReply:
+//         checkReplyYes := stringInSlice(chatCmd, cfg.CmdConfig.UserReplyYes)
+//         checkReplyNo := stringInSlice(chatCmd, cfg.CmdConfig.UserReplyNo)
         
-        switch {
-        case checkReplyYes == true:
-            handleTeleScript(scriptLanguage, chatCmdLanguage)
-            userSta = UserSendCmd
-        case checkReplyNo == true:
-            sendToTelegram(cfg.CmdConfig.BotReply["No"])
-            userSta = UserSendCmd
-        default:
-            sendToTelegram(cfg.CmdConfig.DefaultRespMsg["ErrorCmd"])
-            userSta = UserSendCmd
+//         switch {
+//         case checkReplyYes == true:
+//             handleTeleScript(scriptLanguage, groupID, chatCmdLanguage)
+//             userSta = UserSendCmd
+//         case checkReplyNo == true:
+//             sendToTelegram(groupID, cfg.CmdConfig.BotReply["No"])
+//             userSta = UserSendCmd
+//         default:
+//             sendToTelegram(groupID, cfg.CmdConfig.DefaultRespMsg["ErrorCmd"])
+//             userSta = UserSendCmd
+//         }
+//     }
+// }
+
+func getGroupIdTelegram (topic string) (string, error) {
+    topicItem := strings.Split(topic, "/")
+    err := "Incorrect topic format"
+
+    if topicItem[0] != "Telegram" {
+        return "0", errors.New(err)
+    }else {
+        if topicItem[2] != "Rx" {
+            return "0", errors.New(err)
+        }else {
+            groupID := topicItem[1]
+            return groupID, nil
         }
     }
 }
@@ -223,7 +261,22 @@ var messageTelePubHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqt
 
     fmt.Printf("Received message: [%s] from topic: %s\n", teleMsg, msg.Topic())
 
-    handleTeleCmd(teleMsg)
+    groupID, err := getGroupIdTelegram(msg.Topic())
+
+    if err != nil {
+
+      log.Fatal(err)
+    }
+
+    handleTeleCmd(groupID, teleMsg)
+
+    // topicItem := strings.Split(msg.Topic(), "/")
+
+
+    // if topicItem[0] == "Telegram" && topicItem[2] == "Rx" {
+    //     groupID := topicItem[1]
+    //     handleTeleCmd(groupID, teleMsg)
+    // }
 }
 
 var messageSerialPubHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) {
@@ -251,20 +304,20 @@ func mqttBegin(broker string, messagePubHandler *mqtt.MessageHandler) mqtt.Clien
     return client
 }
 
-func getTheClosestString(str string, strArr[] string) string {
-    minNumStep := 7
-    resStr := "NULL"
+// func getTheClosestString(str string, strArr[] string) string {
+//     minNumStep := 7
+//     resStr := "NULL"
 
-    for i := 0; i < len(strArr); i++ {
-        // fmt.Println("KQ: ", levenDis(first, strArr[i]))
-        numStep := levenshtein.ComputeDistance(str, strArr[i])
-        if numStep < minNumStep {
-            minNumStep = numStep
-            resStr = strArr[i]
-        }
-    }
-    return resStr
-}
+//     for i := 0; i < len(strArr); i++ {
+//         // fmt.Println("KQ: ", levenDis(first, strArr[i]))
+//         numStep := levenshtein.ComputeDistance(str, strArr[i])
+//         if numStep < minNumStep {
+//             minNumStep = numStep
+//             resStr = strArr[i]
+//         }
+//     }
+//     return resStr
+// }
 
 func main() {
     // userSta := UserSendCmd
