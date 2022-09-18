@@ -7,9 +7,13 @@ import (
     mqtt "github.com/eclipse/paho.mqtt.golang"
     "github.com/ghodss/yaml"
     "io/ioutil"
-    // "github.com/agnivade/levenshtein" 
+    "github.com/agnivade/levenshtein" 
     "strings"
     "errors"
+    "golang.org/x/text/runes"
+    "golang.org/x/text/transform"
+    "golang.org/x/text/unicode/norm"
+    "unicode"
 )
 
 type Mqtt struct {
@@ -152,6 +156,11 @@ func cmdListMapInit(controlLedArr []LedControlCode,
 }
 
 func handleTeleCmd(groupID string, chatCmd string) {  
+    //normStr := getNormStr(chatCmd)
+
+    resStr := getClosestStr(chatCmd, listChatCmds)
+
+    fmt.Printf("chat: %s  -> norm: %s\n", chatCmd, resStr)
 
     scriptVN, checkKeyExistsVN := cmdListMapVN[chatCmd];
 
@@ -186,7 +195,7 @@ func handleTeleCmd(groupID string, chatCmd string) {
 //     switch userSta {
 //     case UserSendCmd:
 
-//         msgRes := getTheClosestString(chatCmd, listChatCmds)
+//         msgRes := getClosestStr(chatCmd, listChatCmds)
 
 //         switch msgRes {
 //         case "NULL":
@@ -255,6 +264,31 @@ func handleSerialCmd(cmd string) {
     serialRXChannel <-cmd
 }
 
+func getNormStr(inputStr string) string {
+
+        lowerStr := strings.ToLower(inputStr)
+
+        t := transform.Chain(norm.NFD, runes.Remove(runes.In(unicode.Mn)), norm.NFC)
+        normStr, _, _ := transform.String(t, lowerStr)
+
+        return normStr      
+}
+
+func getClosestStr(str string, strArr[] string) string {
+    minNumStep := 7
+    resStr := "NULL"
+
+    for i := 0; i < len(strArr); i++ {
+        numStep := levenshtein.ComputeDistance(getNormStr(str), getNormStr(strArr[i]))
+        fmt.Printf("[%s - %d]\n", getNormStr(strArr[i]), numStep)
+        if numStep < minNumStep {
+            minNumStep = numStep
+            resStr = strArr[i]
+        }
+    }
+    return resStr
+}
+
 var messageTelePubHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) {
 
     teleMsg := string(msg.Payload())
@@ -304,20 +338,7 @@ func mqttBegin(broker string, messagePubHandler *mqtt.MessageHandler) mqtt.Clien
     return client
 }
 
-// func getTheClosestString(str string, strArr[] string) string {
-//     minNumStep := 7
-//     resStr := "NULL"
 
-//     for i := 0; i < len(strArr); i++ {
-//         // fmt.Println("KQ: ", levenDis(first, strArr[i]))
-//         numStep := levenshtein.ComputeDistance(str, strArr[i])
-//         if numStep < minNumStep {
-//             minNumStep = numStep
-//             resStr = strArr[i]
-//         }
-//     }
-//     return resStr
-// }
 
 func main() {
     // userSta := UserSendCmd
