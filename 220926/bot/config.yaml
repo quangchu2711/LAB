@@ -1,0 +1,86 @@
+
+MqttConfig        : 
+  Broker          : 'localhost:1883'
+
+  SerialSrcTopic  : 'xuong/device/esp1170372/status'
+  SerialDstTopic  : 'xuong/device/esp1170372/cmd'
+
+  TeleSrcTopic    : 'Telegram/Quang_bot/Rx'
+  TeleDstTopic    : 'Telegram/Quang_bot/Tx'    
+
+CmdConfig:
+
+  ControlLedVN:
+    - ChatCmd: 
+      - 'Bật đèn 1'
+      - 'Bat den 1'
+      - 'bật đèn 1'
+      - 'bat den 1'
+      DeviceCmd        : 'ON1'
+      ChatResponseMap:
+         'ON1'           : 'Đèn 1 đã bật'
+
+    - ChatCmd: 
+      - 'Tắt đèn 1'
+      - 'Tat den 1'
+      - 'tắt đèn 1'
+      - 'tat den 1'
+      DeviceCmd        : 'OFF1'
+      ChatResponseMap:
+         'OFF1'           : 'Đèn 1 đã tắt'
+
+    - ChatCmd: 
+      - 'Bật đèn 2'
+      - 'Bat den 2'
+      - 'bật đèn 2'
+      - 'bat den 2'      
+      DeviceCmd        : 'ON2'
+      ChatResponseMap:
+         'ON2'           : 'Đèn 2 đã bật'
+
+    - ChatCmd: 
+      - 'Tắt đèn 2'
+      - 'Tat den 2'
+      - 'tắt đèn 2'
+      - 'tat den 2'
+      DeviceCmd        : 'OFF2'
+      ChatResponseMap:
+         'OFF2'           : 'Đèn 2 đã tắt'
+
+  ControlLedEN:
+    - ChatCmd:        
+      - 'Led 1 on'
+      - 'LED 1 ON'
+      DeviceCmd        : 'ON1'
+      ChatResponseMap:
+         'ON1'          : 'Led 1 was on'
+
+    - ChatCmd:        
+      - 'Led 1 off'
+      - 'LED 1 OFF'
+      DeviceCmd        : 'OFF1'
+      ChatResponseMap:
+         'OFF1'           : 'Led 1 was off'        
+
+    - ChatCmd:        
+      - 'Led 2 on'
+      - 'LED 2 ON'
+      DeviceCmd        : 'ON2'
+      ChatResponseMap:
+         'ON2'           : 'Led 2 was on'
+
+    - ChatCmd: 
+      - 'Led 2 off'
+      - 'LED 2 OFF'
+      DeviceCmd        : 'OFF2'
+      ChatResponseMap:
+         'OFF2'           : 'Led 2 was off' 
+
+  DefaultRespMsg:
+    'ErrorCmd'         : 'Wrong command. Please try again!'
+    'TimeoutVN'        : 'Quá thời gian, không nhận được phản hồi từ thiết bị'
+    'TimeoutEN'        : 'Time out, no response from device'
+    'UnknowCmdVN'      : 'Yêu cầu không rõ, bạn có thể thử:'
+    'UnknowCmdEN'      : 'Request unknown. You can request:'    
+
+  TickTimeout          : 3
