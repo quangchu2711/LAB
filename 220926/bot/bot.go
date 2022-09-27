@@ -11,6 +11,8 @@ import (
 
 type Mqtt struct {
     Broker string
+    User string
+    Password string
 
     SerialSrcTopic string
     SerialDstTopic string
@@ -151,9 +153,6 @@ func handleTeleCmd(chatCmd string) {
     case checkKeyExistsEN == true:
         handleTeleScript(scriptEN, chatCmd)   
     default: 
-        // sendToTelegram(cfg.CmdConfig.DefaultRespMsg["ErrorCmd"] + "\n" + listCfgChatCmds)
-        //sendToTelegram(cfg.CmdConfig.DefaultRespMsg["UnknowCmdVN"] + listChatCmds)
-        //sendToTelegram("Yêu cầu không rõ, bạn có thể thử: " + listCfgChatCmds)
         helpResVN := cfg.CmdConfig.DefaultRespMsg["UnknowCmdVN"]
         helpResEN := cfg.CmdConfig.DefaultRespMsg["UnknowCmdEN"]
 
@@ -161,46 +160,6 @@ func handleTeleCmd(chatCmd string) {
         sendToTelegram(helpResEN)
     }
 }
-
-// func handleTeleCmd(chatCmd string) {
-
-//     switch botChatSta {
-//     case FirstResponse:
-        
-//         scriptVN, checkKeyExistsVN := cmdListMapVN[chatCmd];
-//         scriptEN, checkKeyExistsEN := cmdListMapEN[chatCmd];
-
-//         switch {        
-//         case checkKeyExistsVN == true:
-//             sendToTelegram("Co phải bạn muốn : " + chatCmd + "?")
-//             scriptLanguage = scriptVN
-//             chatCmdLanguage = chatCmd
-//             botChatSta = SecondResponse
-
-//         case checkKeyExistsEN == true:
-//             sendToTelegram("Do you want: " + chatCmd + "?")  
-//             scriptLanguage = scriptEN
-//             chatCmdLanguage = chatCmd
-//             botChatSta = SecondResponse
-
-//         default: 
-//             helpResVN := cfg.CmdConfig.DefaultRespMsg["UnknowCmdVN"]
-//             helpResEN := cfg.CmdConfig.DefaultRespMsg["UnknowCmdEN"]
-//             sendToTelegram(helpResVN)
-//             sendToTelegram(helpResEN)
-//         }
-
-//     case SecondResponse:
-//         switch chatCmd {
-//         case "Đúng", "Yes", "dung", "yes":
-//             handleTeleScript(scriptLanguage, chatCmdLanguage)
-//             botChatSta = FirstResponse
-//         default:
-//             sendToTelegram(cfg.CmdConfig.DefaultRespMsg["ErrorCmd"])
-//             botChatSta = FirstResponse
-//         }
-//     }
-// }
 
 func handleSerialCmd(cmd string) {
     serialRXChannel <-cmd
@@ -224,12 +183,16 @@ var messageSerialPubHandler mqtt.MessageHandler = func(client mqtt.Client, msg m
     handleSerialCmd(serialMsg)
 }
 
-func mqttBegin(broker string, messagePubHandler *mqtt.MessageHandler) mqtt.Client {
+func mqttBegin(broker string, user string, pw string, messagePubHandler *mqtt.MessageHandler) mqtt.Client {
 
     var opts *mqtt.ClientOptions = new(mqtt.ClientOptions)
 
     opts = mqtt.NewClientOptions()
     opts.AddBroker(broker)
+
+    opts.SetUsername(user)
+    opts.SetPassword(pw)  
+    opts.SetCleanSession(true)
 
     opts.SetDefaultPublishHandler(*messagePubHandler)
 
@@ -251,11 +214,11 @@ func main() {
 
     cmdListMapEN = cmdListMapInit(cfg.CmdConfig.ControlLedEN, "TimeoutEN", "UnknowCmdEN")
 
-    mqttClientHandleTele = mqttBegin(cfg.MqttConfig.Broker, &messageTelePubHandler)
+    mqttClientHandleTele = mqttBegin(cfg.MqttConfig.Broker, cfg.MqttConfig.User, cfg.MqttConfig.Password, &messageTelePubHandler)
 
     mqttClientHandleTele.Subscribe(cfg.MqttConfig.TeleSrcTopic, 1, nil)
 
-    mqttClientHandleSerial = mqttBegin(cfg.MqttConfig.Broker, &messageSerialPubHandler)
+    mqttClientHandleSerial = mqttBegin(cfg.MqttConfig.Broker, cfg.MqttConfig.User, cfg.MqttConfig.Password, &messageSerialPubHandler)
 
     mqttClientHandleSerial.Subscribe(cfg.MqttConfig.SerialSrcTopic, 1, nil)
     
