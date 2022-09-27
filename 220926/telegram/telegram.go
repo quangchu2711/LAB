@@ -12,6 +12,8 @@ import (
 
 type Mqtt struct {
     Broker string
+    User string
+    Password string
     TeleSrcTopic string
     TeleDstTopic string   
 }
@@ -57,12 +59,17 @@ func yamlFileHandle() {
 
 }
 
-func mqttBegin(broker string) mqtt.Client {
+func mqttBegin(broker string, user string, pw string) mqtt.Client {
     var opts *mqtt.ClientOptions = new(mqtt.ClientOptions)
 
     opts = mqtt.NewClientOptions()
 
     opts.AddBroker(fmt.Sprintf(broker))
+
+    opts.SetUsername(user)
+    opts.SetPassword(pw)   
+    opts.SetCleanSession(true)
+
 
     opts.SetDefaultPublishHandler(messagePubHandler)
 
@@ -100,7 +107,7 @@ func telegramBotBegin(bot_token string) (tgbotapi.UpdatesChannel, *tgbotapi.BotA
 func main() {
     yamlFileHandle()
 
-    mqttClient := mqttBegin(cfg.MqttConfig.Broker)
+    mqttClient := mqttBegin(cfg.MqttConfig.Broker, cfg.MqttConfig.User, cfg.MqttConfig.Password)
 
     mqttClient.Subscribe(cfg.MqttConfig.TeleDstTopic, 1, nil)
 
