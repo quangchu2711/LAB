@@ -1,0 +1,54 @@
+goos: windows
+goarch: amd64
+pkg: leven
+cpu: Intel(R) Core(TM) i5-9300H CPU @ 2.40GHz
+BenchmarkAll/ASCII/agniva-8  	 4641680	       239.4 ns/op
+BenchmarkAll/ASCII/agniva-8  	 5617311	       253.1 ns/op
+BenchmarkAll/ASCII/agniva-8  	 5304436	       233.4 ns/op
+BenchmarkAll/ASCII/arbovm-8  	 3952486	       280.8 ns/op
+BenchmarkAll/ASCII/arbovm-8  	 4055877	       282.0 ns/op
+BenchmarkAll/ASCII/arbovm-8  	 4416651	       286.5 ns/op
+BenchmarkAll/ASCII/kaweihe-8 	15343756	        76.80 ns/op
+BenchmarkAll/ASCII/kaweihe-8 	15578426	        78.38 ns/op
+BenchmarkAll/ASCII/kaweihe-8 	12205243	        82.49 ns/op
+BenchmarkAll/ASCII/dgryski-8 	 3381162	       300.6 ns/op
+BenchmarkAll/ASCII/dgryski-8 	 4143760	       292.9 ns/op
+BenchmarkAll/ASCII/dgryski-8 	 4207458	       296.2 ns/op
+BenchmarkAll/French/agniva-8 	 2638129	       438.3 ns/op
+BenchmarkAll/French/agniva-8 	 2855349	       454.8 ns/op
+BenchmarkAll/French/agniva-8 	 2513161	       433.2 ns/op
+BenchmarkAll/French/arbovm-8 	 2239808	       562.6 ns/op
+BenchmarkAll/French/arbovm-8 	 2367248	       524.6 ns/op
+BenchmarkAll/French/arbovm-8 	 2251690	       517.8 ns/op
+BenchmarkAll/French/kaweihe-8         	 8948732	       127.0 ns/op
+BenchmarkAll/French/kaweihe-8         	 8748650	       132.7 ns/op
+BenchmarkAll/French/kaweihe-8         	 9577664	       126.2 ns/op
+BenchmarkAll/French/dgryski-8         	 2147766	       580.6 ns/op
+BenchmarkAll/French/dgryski-8         	 2107972	       528.2 ns/op
+BenchmarkAll/French/dgryski-8         	 2295014	       542.3 ns/op
+BenchmarkAll/Nordic/agniva-8          	 1374789	       869.1 ns/op
+BenchmarkAll/Nordic/agniva-8          	 1283974	       882.7 ns/op
+BenchmarkAll/Nordic/agniva-8          	 1338944	       869.2 ns/op
+BenchmarkAll/Nordic/arbovm-8          	 1209522	       975.9 ns/op
+BenchmarkAll/Nordic/arbovm-8          	 1206528	       994.7 ns/op
+BenchmarkAll/Nordic/arbovm-8          	 1206703	      1013 ns/op
+BenchmarkAll/Nordic/kaweihe-8         	 6290544	       187.7 ns/op
+BenchmarkAll/Nordic/kaweihe-8         	 6281025	       187.4 ns/op
+BenchmarkAll/Nordic/kaweihe-8         	 6636786	       196.1 ns/op
+BenchmarkAll/Nordic/dgryski-8         	 1000000	      1105 ns/op
+BenchmarkAll/Nordic/dgryski-8         	 1154775	      1001 ns/op
+BenchmarkAll/Nordic/dgryski-8         	 1000000	      1033 ns/op
+BenchmarkAll/Tibetan/agniva-8         	 1762221	       738.8 ns/op
+BenchmarkAll/Tibetan/agniva-8         	 1519783	       725.1 ns/op
+BenchmarkAll/Tibetan/agniva-8         	 1513956	       770.1 ns/op
+BenchmarkAll/Tibetan/arbovm-8         	 1364054	       849.8 ns/op
+BenchmarkAll/Tibetan/arbovm-8         	 1285803	       931.1 ns/op
+BenchmarkAll/Tibetan/arbovm-8         	 1399453	      1089 ns/op
+BenchmarkAll/Tibetan/kaweihe-8        	 3418260	       307.4 ns/op
+BenchmarkAll/Tibetan/kaweihe-8        	 3636423	       303.8 ns/op
+BenchmarkAll/Tibetan/kaweihe-8        	 3708621	       329.6 ns/op
+BenchmarkAll/Tibetan/dgryski-8        	 1236717	      1036 ns/op
+BenchmarkAll/Tibetan/dgryski-8        	 1288746	       905.9 ns/op
+BenchmarkAll/Tibetan/dgryski-8        	 1305810	       937.2 ns/op
+PASS
+ok  	leven	82.350s
