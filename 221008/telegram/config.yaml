@@ -5,6 +5,8 @@ TelegramConfig    :
 
 MqttConfig        : 
   Broker          : 'localhost:1883'
+  User            : 'nmtamn' 
+  Password        : '221220'
   TeleSrcTopic    : 'Telegram/GroupID/Rx'
   TeleDstTopic    : 'Telegram/+/Tx'  
 
