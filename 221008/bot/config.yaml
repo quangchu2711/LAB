@@ -1,7 +1,8 @@
 
 MqttConfig        : 
   Broker          : 'localhost:1883'
-
+  User            : 'nmtam'
+  Password        : '221220'
   SerialSrcTopic  : 'Serial/COM4/Rx'
   SerialDstTopic  : 'Serial/COM4/Tx'
 

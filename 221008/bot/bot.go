@@ -18,7 +18,8 @@ import (
 
 type Mqtt struct {
     Broker string
-
+    User string
+    Password string
     SerialSrcTopic string
     SerialDstTopic string
 
@@ -49,7 +50,7 @@ type FileConfig struct {
 type StringSearchResults int
 const (
     AlmostSame StringSearchResults = iota
-    Same
+    Same    
     Different
 )
 
@@ -164,11 +165,10 @@ func handleTeleScript(script *LedControlCode, groupID string, chatCmd string) {
 } 
 
 func handleTeleCmd(groupID string, chatCmd string) {  
-
     resStr, strSearchResults := findTheMostSimilarString(chatCmd, listChatCmds)
     // fmt.Printf("[cmd: %s - num: %d]\n", resStr, numTransStep)
 
-    switch strCmpResults {
+    switch strSearchResults {
         case Different:
             helpResVN := "[" + cfg.CmdConfig.DefaultRespMsg["ResponseHelpVN"] + "]"
             helpResEN := "[" + cfg.CmdConfig.DefaultRespMsg["ResponseHelpEN"] + "]"
@@ -200,13 +200,14 @@ func handleSerialCmd(cmd string) {
 }
 
 
-func mqttBegin(broker string, messagePubHandler *mqtt.MessageHandler) mqtt.Client {
+func mqttBegin(broker string, user string, pw string, messagePubHandler *mqtt.MessageHandler) mqtt.Client {
 
     var opts *mqtt.ClientOptions = new(mqtt.ClientOptions)
 
     opts = mqtt.NewClientOptions()
     opts.AddBroker(broker)
-
+    opts.SetUsername(user)
+    opts.SetPassword(pw) 
     opts.SetDefaultPublishHandler(*messagePubHandler)
 
     client := mqtt.NewClient(opts)
@@ -260,9 +261,9 @@ func main() {
     yamlFileHandle()
     cmdListMapVN = cmdListMapInit(cfg.CmdConfig.ControlLedVN, "TimeoutVN", "ResponseHelpVN")
     cmdListMapEN = cmdListMapInit(cfg.CmdConfig.ControlLedEN, "TimeoutEN", "ResponseHelpEN")
-    mqttClientHandleTele = mqttBegin(cfg.MqttConfig.Broker, &messageTelePubHandler)
+    mqttClientHandleTele = mqttBegin(cfg.MqttConfig.Broker, cfg.MqttConfig.User, cfg.MqttConfig.Password, &messageTelePubHandler)
     mqttClientHandleTele.Subscribe(cfg.MqttConfig.TeleSrcTopic, 1, nil)
-    mqttClientHandleSerial = mqttBegin(cfg.MqttConfig.Broker, &messageSerialPubHandler)
+    mqttClientHandleSerial = mqttBegin(cfg.MqttConfig.Broker, cfg.MqttConfig.User, cfg.MqttConfig.Password, &messageSerialPubHandler)
     mqttClientHandleSerial.Subscribe(cfg.MqttConfig.SerialSrcTopic, 1, nil)
     fmt.Println("Connected")
 
