@@ -72,3 +72,4 @@ CmdConfig:
     'HintQuestionEN'   : 'Do you want ?'
 
   TickTimeout: 2 
+  StringTransformThreshold: 7
