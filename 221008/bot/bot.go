@@ -1,7 +1,6 @@
 package main
 
 import (
-    "log"
     "fmt"
     "time"
     mqtt "github.com/eclipse/paho.mqtt.golang"
@@ -40,6 +39,7 @@ type Command struct {
 
     DefaultRespMsg map[string]string 
     TickTimeout time.Duration
+    StringTransformThreshold int
 }
 
 type FileConfig struct {
@@ -64,9 +64,7 @@ var cmdListMapEN map[string]*LedControlCode
 var listChatCmds[] string 
 
 var messageTelePubHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) {
-
     teleMsg := string(msg.Payload())
-
     fmt.Printf("Received message: [%s] from topic: %s\n", teleMsg, msg.Topic())
     groupID, _ := getGroupIdTelegram(msg.Topic())
     handleTeleCmd(groupID, teleMsg)
@@ -100,13 +98,13 @@ func cmdListMapInit(controlLedArr []LedControlCode,
 }
 
 func findTheMostSimilarString(str string, strArr[] string) (string, StringSearchResults) {
-    minNumStep := 7
+    strTransThreshold := cfg.CmdConfig.StringTransformThreshold
+    minNumStep := strTransThreshold
     resStr := "NULL"
-    numTransStep := - 1
     cmpSta := Different
 
     for i := 0; i < len(strArr); i++ {
-        numTransStep = levenshtein.ComputeDistance(getNormStr(str), getNormStr(strArr[i]))
+        numTransStep := levenshtein.ComputeDistance(getNormStr(str), getNormStr(strArr[i]))
         // fmt.Printf("[%s - %d]\n", getNormStr(strArr[i]), numTransStep)
         if numTransStep < minNumStep {
             minNumStep = numTransStep
@@ -115,9 +113,10 @@ func findTheMostSimilarString(str string, strArr[] string) (string, StringSearch
     }
     if minNumStep == 0 {
         cmpSta = Same
-    }else if minNumStep < 7 {
+    }else if minNumStep < strTransThreshold {
         cmpSta = AlmostSame
     }
+
     return resStr, cmpSta
 }
 
@@ -138,7 +137,6 @@ func getGroupIdTelegram (topic string) (string, error) {
 }
 
 func getNormStr(inputStr string) string {
-
         lowerStr := strings.ToLower(inputStr)
 
         t := transform.Chain(norm.NFD, runes.Remove(runes.In(unicode.Mn)), norm.NFC)
@@ -147,14 +145,11 @@ func getNormStr(inputStr string) string {
         return normStr      
 }
 
-func handleTeleScript(script *LedControlCode, groupID string, chatCmd string) {
-
+func handleTeleScript(script *LedControlCode, groupID string) {
     sendToSerial(script.DeviceCmd)
 
     resRxChan := readSerialRXChannel(cfg.CmdConfig.TickTimeout)
-
     resDataTele, checkKeyExists := script.ChatResponseMap[resRxChan];
-
     switch checkKeyExists {
         case true:
             sendToTelegram(groupID, resDataTele)
@@ -188,9 +183,9 @@ func handleTeleCmd(groupID string, chatCmd string) {
             scriptVN, checkKeyExistsVN := cmdListMapVN[resStr];
             scriptEN, _ := cmdListMapEN[chatCmd];
             if checkKeyExistsVN == true {
-                handleTeleScript(scriptVN, groupID, resStr)
+                handleTeleScript(scriptVN, groupID)
             }else {
-                handleTeleScript(scriptEN, groupID, resStr)          
+                handleTeleScript(scriptEN, groupID)          
             }            
     }
 }
@@ -201,7 +196,6 @@ func handleSerialCmd(cmd string) {
 
 
 func mqttBegin(broker string, user string, pw string, messagePubHandler *mqtt.MessageHandler) mqtt.Client {
-
     var opts *mqtt.ClientOptions = new(mqtt.ClientOptions)
 
     opts = mqtt.NewClientOptions()
@@ -209,11 +203,11 @@ func mqttBegin(broker string, user string, pw string, messagePubHandler *mqtt.Me
     opts.SetUsername(user)
     opts.SetPassword(pw) 
     opts.SetDefaultPublishHandler(*messagePubHandler)
-
     client := mqtt.NewClient(opts)
     if token := client.Connect(); token.Wait() && token.Error() != nil {
         panic(token.Error())
     }
+
     return client
 }
 
@@ -238,22 +232,9 @@ func sendToTelegram(groupID string, msg string) {
     mqttClientHandleSerial.Publish(teleDstTopic, 0, false, msg)
 }
 
-
 func yamlFileHandle() {
-    yfile, err := ioutil.ReadFile("config.yaml")
-
-    if err != nil {
-
-      log.Fatal(err)
-    }
-
-    err2 := yaml.Unmarshal(yfile, &cfg)
-
-    if err2 != nil {
-        fmt.Println("Error file yaml")
-
-      log.Fatal(err2)
-    }
+    yfile, _ := ioutil.ReadFile("config.yaml")
+    yaml.Unmarshal(yfile, &cfg)
 }
 
 func main() {
