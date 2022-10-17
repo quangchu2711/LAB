@@ -13,6 +13,7 @@ import (
     "golang.org/x/text/transform"
     "golang.org/x/text/unicode/norm"
     "unicode"
+    "sort"
 )
 
 type Mqtt struct {
@@ -28,7 +29,7 @@ type Mqtt struct {
 
 
 type LedControlCode struct {
-    ChatCmd []string
+    ChatCmd string
     DeviceCmd string
     ChatResponseMap map[string]string
 }
@@ -39,7 +40,7 @@ type Command struct {
 
     DefaultRespMsg map[string]string 
     TickTimeout time.Duration
-    StringTransformThreshold int
+    StringRateThreshold float32
 }
 
 type FileConfig struct {
@@ -47,12 +48,17 @@ type FileConfig struct {
     CmdConfig Command
 }
 
-type StringSearchResults int
+type StringSearchResult int
 const (
-    AlmostSame StringSearchResults = iota
+    AlmostSame StringSearchResult = iota
     Same    
     Different
 )
+
+type StringCompare struct {
+    Data string
+    RatePercent float32
+}
 
 var cfg FileConfig
 var mqttClientHandleTele mqtt.Client
@@ -61,7 +67,7 @@ var mqttClientHandleSerial mqtt.Client
 var serialRXChannel chan string 
 var cmdListMapVN map[string]*LedControlCode
 var cmdListMapEN map[string]*LedControlCode
-var listChatCmds[] string 
+var chatCmdlist[] string 
 
 var messageTelePubHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) {
     teleMsg := string(msg.Payload())
@@ -77,47 +83,18 @@ var messageSerialPubHandler mqtt.MessageHandler = func(client mqtt.Client, msg m
 }
 
 func cmdListMapInit(controlLedArr []LedControlCode,
-                    resMsgTimeout string,
-                    resMsgUnknowCmd string) map[string]*LedControlCode {
-    var cmdStr string
+                    msgTimeout string) map[string]*LedControlCode {
     cmdListMap := make(map[string]*LedControlCode)
 
     for i := 0 ; i < len(controlLedArr); i++ {
-        for j := 0; j < len(controlLedArr[i].ChatCmd); j++ {
-            cmdListMap[controlLedArr[i].ChatCmd[j]] = &controlLedArr[i]
-            listChatCmds = append(listChatCmds, controlLedArr[i].ChatCmd[j])
-        }
-        cmdStr += "/" + controlLedArr[i].ChatCmd[0]
+        cmdListMap[controlLedArr[i].ChatCmd] = &controlLedArr[i]
+        chatCmdlist = append(chatCmdlist, controlLedArr[i].ChatCmd)
     }
-    cfg.CmdConfig.DefaultRespMsg[resMsgUnknowCmd] += cmdStr
     for _, controlLed :=range controlLedArr {
-        controlLed.ChatResponseMap["Timeout"] =  cfg.CmdConfig.DefaultRespMsg[resMsgTimeout] 
+        controlLed.ChatResponseMap["Timeout"] =  cfg.CmdConfig.DefaultRespMsg[msgTimeout] 
     } 
 
     return cmdListMap      
-}
-
-func findTheMostSimilarString(str string, strArr[] string) (string, StringSearchResults) {
-    strTransThreshold := cfg.CmdConfig.StringTransformThreshold
-    minNumStep := strTransThreshold
-    resStr := "NULL"
-    cmpSta := Different
-
-    for i := 0; i < len(strArr); i++ {
-        numTransStep := levenshtein.ComputeDistance(getNormStr(str), getNormStr(strArr[i]))
-        // fmt.Printf("[%s - %d]\n", getNormStr(strArr[i]), numTransStep)
-        if numTransStep < minNumStep {
-            minNumStep = numTransStep
-            resStr = strArr[i]
-        }
-    }
-    if minNumStep == 0 {
-        cmpSta = Same
-    }else if minNumStep < strTransThreshold {
-        cmpSta = AlmostSame
-    }
-
-    return resStr, cmpSta
 }
 
 func getGroupIdTelegram (topic string) (string, error) {
@@ -145,55 +122,59 @@ func getNormStr(inputStr string) string {
         return normStr      
 }
 
+func getCommandSearchStatus(rateOfChange float32) StringSearchResult {
+    cmdSearchRes := Different
+    strRateThres := cfg.CmdConfig.StringRateThreshold
+
+    if rateOfChange == 100.0 {
+        cmdSearchRes = Same
+    }else if rateOfChange >= strRateThres {
+        cmdSearchRes = AlmostSame
+    }
+
+    return cmdSearchRes
+}
+
 func handleTeleScript(script *LedControlCode, groupID string) {
     sendToSerial(script.DeviceCmd)
-
     resRxChan := readSerialRXChannel(cfg.CmdConfig.TickTimeout)
     resDataTele, checkKeyExists := script.ChatResponseMap[resRxChan];
-    switch checkKeyExists {
-        case true:
-            sendToTelegram(groupID, resDataTele)
 
-        default:
-            sendToTelegram(groupID, cfg.CmdConfig.DefaultRespMsg["ErrorCmd"])
+    switch checkKeyExists {
+    case true:
+        sendToTelegram(groupID, resDataTele)
+    default:
+        sendToTelegram(groupID, cfg.CmdConfig.DefaultRespMsg["ErrorCmd"])
     }
 } 
 
-func handleTeleCmd(groupID string, chatCmd string) {  
-    resStr, strSearchResults := findTheMostSimilarString(chatCmd, listChatCmds)
-    // fmt.Printf("[cmd: %s - num: %d]\n", resStr, numTransStep)
+func handleTeleCmd(groupID string, cmd string) {
+    chatCmd := removeElementAfterBracket(cmd)  
+    chatCmdArr := sortCommandCompareArrayDescending(chatCmd, chatCmdlist)
+    maxRatePercent :=  chatCmdArr[0].RatePercent
+    cmdSearchRes := getCommandSearchStatus(maxRatePercent)
 
-    switch strSearchResults {
-        case Different:
-            helpResVN := "[" + cfg.CmdConfig.DefaultRespMsg["ResponseHelpVN"] + "]"
-            helpResEN := "[" + cfg.CmdConfig.DefaultRespMsg["ResponseHelpEN"] + "]"
-            sendToTelegram(groupID, helpResVN)
-            sendToTelegram(groupID, helpResEN)  
-        case AlmostSame:
-            var msgResponse string
-            _, checkKeyVN := cmdListMapVN[resStr];
-            if checkKeyVN == true {
-                msgResponse = "[" + cfg.CmdConfig.DefaultRespMsg["HintQuestionVN"] + "/" + resStr + "]"                  
-            }else {
-                msgResponse = "[" + cfg.CmdConfig.DefaultRespMsg["HintQuestionEN"] + "/" + resStr + "]"
-            }
-            sendToTelegram(groupID, msgResponse)
-        case Same:
-            // fmt.Println("[Dieu khien thanh cong]")
-            scriptVN, checkKeyExistsVN := cmdListMapVN[resStr];
-            scriptEN, _ := cmdListMapEN[chatCmd];
-            if checkKeyExistsVN == true {
-                handleTeleScript(scriptVN, groupID)
-            }else {
-                handleTeleScript(scriptEN, groupID)          
-            }            
+    switch cmdSearchRes {
+    case Different:
+        sendHelpResponseToTelegramUser(groupID)
+    case AlmostSame:
+        sendSuggestResponseToTelegramUser(groupID, chatCmdArr)
+    case Same:
+        scriptVN, checkKeyExistsVN := cmdListMapVN[chatCmdArr[0].Data]
+        scriptEN, _ := cmdListMapEN[chatCmd];
+        if checkKeyExistsVN == true {
+            fmt.Println("Vietnamese")
+            handleTeleScript(scriptVN, groupID)
+        }else {
+            fmt.Println("English")
+            handleTeleScript(scriptEN, groupID)          
+        }            
     }
 }
 
 func handleSerialCmd(cmd string) {
     serialRXChannel <-cmd
 }
-
 
 func mqttBegin(broker string, user string, pw string, messagePubHandler *mqtt.MessageHandler) mqtt.Client {
     var opts *mqtt.ClientOptions = new(mqtt.ClientOptions)
@@ -215,12 +196,55 @@ func readSerialRXChannel(timeOut time.Duration) string {
     var msg string
 
     select {
-        case msg =  <-serialRXChannel:
-            return msg;
-        case <-time.After(timeOut * time.Second):
-            msg = "Timeout"
-            return msg
+    case msg =  <-serialRXChannel:
+        return msg;
+    case <-time.After(timeOut * time.Second):
+        msg = "Timeout"
+        return msg
     }
+}
+
+func removeElementAfterBracket(strInput string) string {
+    var strOutput string
+    index := strings.Index(strInput, "(")
+    if index == -1 {
+        strOutput = strInput
+    }else {
+        strOutput = strInput[0:(index-1)]        
+    }
+    return strOutput
+}
+
+func sendHelpResponseToTelegramUser(groupID string) {
+    var cmdKeyboard string
+    textVN := cfg.CmdConfig.DefaultRespMsg["ResponseHelpVN"]
+    textEN := cfg.CmdConfig.DefaultRespMsg["ResponseHelpEN"]
+    textKeyboard := textVN + "\n" + textEN
+    
+    for _, cmd := range chatCmdlist {
+        cmdKeyboard += "/" + cmd
+    }
+
+    sendToTelegram(groupID, "[" + textKeyboard + cmdKeyboard + "]")   
+}
+
+func sendSuggestResponseToTelegramUser (groupID string, chatCmdArr []StringCompare) {
+    var textKeyboard string
+    var cmdKeyboard string 
+    chatCmd := chatCmdArr[0].Data
+
+    _, checkKeyExistsVN := cmdListMapVN[chatCmd]
+    if checkKeyExistsVN == true {
+        textKeyboard = cfg.CmdConfig.DefaultRespMsg["SuggestVN"]
+    }else {
+        textKeyboard = cfg.CmdConfig.DefaultRespMsg["SuggestEN"]        
+    }
+    for i := 0; i < 3; i++ {
+        rateValue := fmt.Sprintf("%.2f", chatCmdArr[i].RatePercent)
+        cmdKeyboard += "/" + chatCmdArr[i].Data + " (" + rateValue + " %" + ")" 
+    }
+
+    sendToTelegram(groupID, "[" + textKeyboard + cmdKeyboard + "]")    
 }
 
 func sendToSerial(msg string) {
@@ -232,16 +256,54 @@ func sendToTelegram(groupID string, msg string) {
     mqttClientHandleSerial.Publish(teleDstTopic, 0, false, msg)
 }
 
+func sortChatCmdlist () []string{
+    var cmdList []string
+    halfLength := len(chatCmdlist) / 2
+
+    for i := 0; i < halfLength; i++ {
+        cmdList = append(cmdList, chatCmdlist[i])        
+        cmdList = append(cmdList, chatCmdlist[i + halfLength])        
+    }
+
+    return cmdList
+}
+
+func sortCommandCompareArrayDescending(str string, strArr[] string) ([]StringCompare) {
+    var strCmp StringCompare
+    var chatCmdArr []StringCompare
+
+    for i := 0; i < len(strArr); i++ {
+        str1 := getNormStr(str)
+        str2 := getNormStr(strArr[i])
+        numTranStep := levenshtein.ComputeDistance(str1, str2)
+        lenStr2 := len(str2)
+        strCmp.Data = strArr[i]
+        if numTranStep > lenStr2 {
+            strCmp.RatePercent = 0.0
+        }else {
+            strCmp.RatePercent = 100.0 - (float32(numTranStep) / float32(len(str2)) * 100.0)
+        }
+        chatCmdArr = append(chatCmdArr, strCmp)
+        // fmt.Printf("[%s - %d - %.2f]\n", getNormStr(strArr[i]), numTranStep, strCmp.RatePercent)
+    }
+    sort.SliceStable(chatCmdArr, func(i, j int) bool {
+        return chatCmdArr[i].RatePercent > chatCmdArr[j].RatePercent
+    })
+
+    return chatCmdArr
+}
+
 func yamlFileHandle() {
     yfile, _ := ioutil.ReadFile("config.yaml")
     yaml.Unmarshal(yfile, &cfg)
 }
 
 func main() {
-    serialRXChannel = make(chan string, 1)
     yamlFileHandle()
-    cmdListMapVN = cmdListMapInit(cfg.CmdConfig.ControlLedVN, "TimeoutVN", "ResponseHelpVN")
-    cmdListMapEN = cmdListMapInit(cfg.CmdConfig.ControlLedEN, "TimeoutEN", "ResponseHelpEN")
+    serialRXChannel = make(chan string, 1)
+    cmdListMapVN = cmdListMapInit(cfg.CmdConfig.ControlLedVN, "TimeoutVN")
+    cmdListMapEN = cmdListMapInit(cfg.CmdConfig.ControlLedEN, "TimeoutEN")
+    chatCmdlist = sortChatCmdlist()
     mqttClientHandleTele = mqttBegin(cfg.MqttConfig.Broker, cfg.MqttConfig.User, cfg.MqttConfig.Password, &messageTelePubHandler)
     mqttClientHandleTele.Subscribe(cfg.MqttConfig.TeleSrcTopic, 1, nil)
     mqttClientHandleSerial = mqttBegin(cfg.MqttConfig.Broker, cfg.MqttConfig.User, cfg.MqttConfig.Password, &messageSerialPubHandler)
