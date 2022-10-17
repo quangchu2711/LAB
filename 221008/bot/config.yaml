@@ -32,6 +32,11 @@ CmdConfig:
       ChatResponseMap   :
          'OFF2'         : 'Đèn phòng bếp đã tắt'
 
+    - ChatCmd           : 'Nhiệt độ phòng bếp'
+      DeviceCmd         : 'TEMP1'
+      ChatResponseMap   :
+         'Data'         : 'Phòng bếp: '
+
   ControlLedEN:
     - ChatCmd           : 'Light living room on'
       DeviceCmd         : 'ON1'
@@ -48,10 +53,15 @@ CmdConfig:
       ChatResponseMap   :
          'ON2'          : 'Light kitchen was on'
 
-    - ChatCmd           : 'Light kitchen on'
+    - ChatCmd           : 'Light kitchen off'
       DeviceCmd         : 'OFF2'
       ChatResponseMap   :
          'OFF2'         : 'Light kitchen was off' 
+
+    - ChatCmd           : 'Kitchen temperature'
+      DeviceCmd         : 'TEMP1'
+      ChatResponseMap   :
+         'Data'         : 'Kitchen: ' 
 
   DefaultRespMsg:
     'ErrorCmd'         : 'Wrong command. Please try again!'
@@ -59,8 +69,8 @@ CmdConfig:
     'TimeoutEN'        : 'Time out, no response from device'
     'ResponseHelpVN'   : 'Yêu cầu không rõ, bạn có thể thử'
     'ResponseHelpEN'   : 'Request unknown, you can request'   
-    'HintQuestionVN'   : 'Có phải bạn muốn:'
-    'HintQuestionEN'   : 'Do you want:'
+    'SuggestVN'        : 'Có phải bạn muốn:'
+    'SuggestEN'        : 'Do you want:'
 
   TickTimeout: 2 
-  StringRateThreshold: 60.0
+  StringRateThreshold: 50.0
