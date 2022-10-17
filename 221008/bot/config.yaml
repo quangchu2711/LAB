@@ -12,12 +12,12 @@ MqttConfig        :
 CmdConfig:
 
   ControlLedVN:
-    - ChatCmdq          : 'Bật đèn phòng khách'
+    - ChatCmd           : 'Bật đèn phòng khách'
       DeviceCmd         : 'ON1'
       ChatResponseMap   :
          'ON1'          : 'Đèn phòng khách đã bật'
 
-    - ChatCmdq          :  'Tắt đèn phòng khách'
+    - ChatCmd           :  'Tắt đèn phòng khách'
       DeviceCmd         : 'OFF1'
       ChatResponseMap   :
          'OFF1'         : 'Đèn phòng khách đã tắt'
