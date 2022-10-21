@@ -1,16 +1,18 @@
-MqttConfig        : 
-  # Broker          : 'orangepione:1883'
-  Broker          : 'localhost:1883'
-  User            : 'nmtam'
-  Password        : '221220'
-  DeviceSrcTopic  : 'xuong/+/status'
-  DeviceDstTopic  : 'xuong/telegram/cmd'
-  TeleSrcTopic    : 'Telegram/+/Rx'
-  TeleDstTopic    : 'Telegram/GroupID/Tx'    
+MqttConfig               : 
+  # Broker               : 'orangepione:1883'
+  Broker                 : 'localhost:1883'
+  User                   : 'nmtam'
+  Password               : '221220'
+  LedDeviceSrcTopic      : 'xuong/+/led/status'
+  LedDeviceDstTopic      : 'xuong/telegram/led/cmd'
+  TeleSrcTopic           : 'Telegram/+/Rx'
+  TeleDstTopic           : 'Telegram/GroupID/Tx'
+  SensorDeviceSrcTopic   : 'xuong/+/sensor/status'
+  SensorDeviceDstTopic   : 'xuong/espID/sensor/cmd'
 
 CmdConfig:
 
-  ControlLedVN:
+  ControlDeviceVN:
     - ChatCmd           : 'Bật đèn phòng khách'
       DeviceCmd         : 'ON1'
       ChatResponseMap   :
@@ -34,9 +36,9 @@ CmdConfig:
     - ChatCmd           : 'Nhiệt độ phòng bếp'
       DeviceCmd         : 'TEMP1'
       ChatResponseMap   :
-         'Data'         : 'Phòng bếp: '
+         'Sensor'       : 'Phòng bếp: '
 
-  ControlLedEN:
+  ControlDeviceEN:
     - ChatCmd           : 'Light living room on'
       DeviceCmd         : 'ON1'
       ChatResponseMap   :
@@ -60,7 +62,7 @@ CmdConfig:
     - ChatCmd           : 'Kitchen temperature'
       DeviceCmd         : 'TEMP1'
       ChatResponseMap   :
-         'Data'         : 'Kitchen: ' 
+         'Sensor'       : 'Kitchen: ' 
 
   DefaultRespMsg:
     'ErrorCmd'         : 'Command not configured. Please try again!'
