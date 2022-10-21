@@ -39,14 +39,14 @@ func mqttBegin(broker string, user string, pw string, messagePubHandler *mqtt.Me
 }
 
 func sendToBot(strMsg string ) {
-    nodeMqttClient.Publish("xuong/esp1170372/sensor/status", 0, false, strMsg)
-    fmt.Println("Publish: xuong/esp1170372/sensor/status" + ": " + strMsg)  
+    nodeMqttClient.Publish("xuong/device/esp1170372/sensor/status", 0, false, strMsg)
+    fmt.Println("Publish: xuong/device/esp1170372/sensor/status" + ": " + strMsg)  
 }
 
 func main() {
     valueSensor = 40
     nodeMqttClient = mqttBegin("localhost:1883", "nmtam", "221220", &messageNodeDevicePubHandler)
-    nodeMqttClient.Subscribe("xuong/espID/sensor/cmd", 1, nil)
+    nodeMqttClient.Subscribe("xuong/device/espID/sensor/cmd", 1, nil)
     
     fmt.Println("Connected")
     for {

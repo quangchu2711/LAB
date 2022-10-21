@@ -90,25 +90,24 @@ var messageLedDevicePubHandler mqtt.MessageHandler = func(client mqtt.Client, ms
     fmt.Printf("Received message: [%s] from topic: %s\n", deviceMsg, msg.Topic())
 
     deviceTopic := strings.Split(msg.Topic(), "/")
-    if deviceTopic[1] == "telegram" {
+    if deviceTopic[2] == "telegram" {
         writeDataToDeviceChannel(deviceMsg)
+    }else {
+        groupID := cfg.CmdConfig.GroupIDLedDevice
+        deviceResponse := "NULL"
+        sendToTelegram(groupID, "HA user just controlled the device")
+        for _, controlLed := range cmdListMapEN {
+            if controlLed.DeviceCmd == deviceMsg {
+                fmt.Println(controlLed.DeviceCmd)
+                deviceResponse = controlLed.ChatResponseMap[deviceMsg]
+            }
+        }
+        if deviceResponse != "NULL" {
+            sendToTelegram(groupID, deviceResponse)
+        }else {
+            sendToTelegram(groupID, cfg.CmdConfig.DefaultRespMsg["ErrorCmd"])
+        }
     }
-    // else {
-    //     groupID := cfg.CmdConfig.GroupIDLedDevice
-    //     deviceResponse := "NULL"
-    //     sendToTelegram(groupID, "HA user just controlled the device")
-    //     for _, controlLed := range cmdListMapEN {
-    //         if controlLed.DeviceCmd == deviceMsg {
-    //             fmt.Println(controlLed.DeviceCmd)
-    //             deviceResponse = controlLed.ChatResponseMap[deviceMsg]
-    //         }
-    //     }
-    //     if deviceResponse != "NULL" {
-    //         sendToTelegram(groupID, deviceResponse)
-    //     }else {
-    //         sendToTelegram(groupID, cfg.CmdConfig.DefaultRespMsg["ErrorCmd"])
-    //     }
-    // }
 }
 
 var messageSensorDevicePubHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) {
@@ -387,6 +386,7 @@ func senToLedDeivce(msg string) {
 
 func sendToSensorDeivce(msg string) {
     sensorDeviceClient.Publish(cfg.MqttConfig.SensorDeviceDstTopic, 0, false, msg)
+    fmt.Printf("Publish: %s: %s\n", cfg.MqttConfig.SensorDeviceDstTopic, msg)
 }
 
 func sendToTelegram(groupID string, msg string) {

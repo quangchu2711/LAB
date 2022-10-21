@@ -3,12 +3,12 @@ MqttConfig               :
   Broker                 : 'localhost:1883'
   User                   : 'nmtam'
   Password               : '221220'
-  LedDeviceSrcTopic      : 'xuong/+/led/status'
-  LedDeviceDstTopic      : 'xuong/telegram/led/cmd'
+  LedDeviceSrcTopic      : 'xuong/device/+/led/status'
+  LedDeviceDstTopic      : 'xuong/device/telegram/led/cmd'
   TeleSrcTopic           : 'Telegram/+/Rx'
   TeleDstTopic           : 'Telegram/GroupID/Tx'
-  SensorDeviceSrcTopic   : 'xuong/+/sensor/status'
-  SensorDeviceDstTopic   : 'xuong/espID/sensor/cmd'
+  SensorDeviceSrcTopic   : 'xuong/device/+/sensor/status'
+  SensorDeviceDstTopic   : 'xuong/device/espID/sensor/cmd'
 
 CmdConfig:
 
