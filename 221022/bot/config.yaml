@@ -8,7 +8,7 @@ MqttConfig               :
   TeleSrcTopic           : 'Telegram/+/Rx'
   TeleDstTopic           : 'Telegram/GroupID/Tx'
   SensorDeviceSrcTopic   : 'xuong/device/+/sensor/status'
-  SensorDeviceDstTopic   : 'xuong/device/espID/sensor/cmd'
+  SensorDeviceDstTopic   : 'xuong/device/telegram/sensor/cmd'
 
 CmdConfig:
 

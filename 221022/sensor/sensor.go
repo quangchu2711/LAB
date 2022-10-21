@@ -39,7 +39,7 @@ func mqttBegin(broker string, user string, pw string, messagePubHandler *mqtt.Me
 }
 
 func sendToBot(strMsg string ) {
-    nodeMqttClient.Publish("xuong/device/esp1170372/sensor/status", 0, false, strMsg)
+    nodeMqttClient.Publish("xuong/device/telegram/sensor/status", 0, false, strMsg)
     fmt.Println("Publish: xuong/device/esp1170372/sensor/status" + ": " + strMsg)  
 }
 
