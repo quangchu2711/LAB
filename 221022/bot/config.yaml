@@ -1,4 +1,4 @@
-MqttConfig               : 
+MqttConfig               :
   # Broker               : 'orangepione:1883'
   Broker                 : 'localhost:1883'
   User                   : 'nmtam'
@@ -23,7 +23,7 @@ CmdConfig:
       ChatResponseMap   :
          'OFF1'         : 'Đèn phòng khách đã tắt'
 
-    - ChatCmd           : 'Bật đèn phòng bếp'   
+    - ChatCmd           : 'Bật đèn phòng bếp'
       DeviceCmd         : 'ON2'
       ChatResponseMap   :
          'ON2'          : 'Đèn phòng bếp đã bật'
@@ -47,8 +47,7 @@ CmdConfig:
     - ChatCmd           : 'Light living room off'
       DeviceCmd         : 'OFF1'
       ChatResponseMap   :
-         'OFF1'         : 'Light living room was off'        
-
+         'OFF1'         : 'Light living room was off'
     - ChatCmd           : 'Light kitchen on'
       DeviceCmd         : 'ON2'
       ChatResponseMap   :
@@ -57,23 +56,22 @@ CmdConfig:
     - ChatCmd           : 'Light kitchen off'
       DeviceCmd         : 'OFF2'
       ChatResponseMap   :
-         'OFF2'         : 'Light kitchen was off' 
+         'OFF2'         : 'Light kitchen was off'
 
     - ChatCmd           : 'Kitchen temperature'
       DeviceCmd         : 'TEMP1'
       ChatResponseMap   :
-         'Sensor'       : 'Kitchen: ' 
+         'Sensor'       : 'Kitchen: '
 
   DefaultRespMsg:
     'ErrorCmd'         : 'Command not configured. Please try again!'
     'TimeoutVN'        : 'Quá thời gian, không nhận được phản hồi từ thiết bị'
     'TimeoutEN'        : 'Time out, no response from device'
     'ResponseHelpVN'   : 'Yêu cầu không rõ, bạn có thể thử'
-    'ResponseHelpEN'   : 'Request unknown, you can request'   
+    'ResponseHelpEN'   : 'Request unknown, you can request'
     'SuggestVN'        : 'Có phải bạn muốn:'
     'SuggestEN'        : 'Do you want:'
 
-  TickTimeout: 2 
+  TickTimeout: 2
   StringRateThreshold: 50.0
-  GroupIDLedDevice: '2105095097'
   BotPassword: '68686868'
