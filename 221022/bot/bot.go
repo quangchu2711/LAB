@@ -6,7 +6,7 @@ import (
     mqtt "github.com/eclipse/paho.mqtt.golang"
     "github.com/ghodss/yaml"
     "io/ioutil"
-    "github.com/agnivade/levenshtein" 
+    "github.com/agnivade/levenshtein"
     "strings"
     "errors"
     "golang.org/x/text/runes"
@@ -22,8 +22,8 @@ type Mqtt struct {
     Password string
     LedDeviceSrcTopic string
     LedDeviceDstTopic string
-    TeleSrcTopic string  
-    TeleDstTopic string   
+    TeleSrcTopic string
+    TeleDstTopic string
     SensorDeviceSrcTopic string
     SensorDeviceDstTopic string
 }
@@ -38,10 +38,9 @@ type DeviceControlCode struct {
 type Command struct {
     ControlDeviceVN []DeviceControlCode
     ControlDeviceEN []DeviceControlCode
-    DefaultRespMsg map[string]string 
+    DefaultRespMsg map[string]string
     TickTimeout time.Duration
     StringRateThreshold float32
-    GroupIDLedDevice string
     BotPassword string
 }
 
@@ -59,7 +58,7 @@ type FileConfig struct {
 type StringSearchResult int
 const (
     AlmostSame StringSearchResult = iota
-    Same    
+    Same
     Different
 )
 
@@ -69,10 +68,10 @@ type StringCompare struct {
 }
 
 var cfg FileConfig
-var chatCmdlist[] string 
+var chatCmdlist[] string
 var cmdListMapEN map[string]*DeviceControlCode
 var cmdListMapVN map[string]*DeviceControlCode
-var deviceChannel chan string 
+var deviceChannel chan string
 var groupIDBotStatusMap map[string]string
 var telegramDeviceClient mqtt.Client
 var ledDeviceClient mqtt.Client
@@ -85,29 +84,41 @@ var messageTelePubHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqt
     botHandle(groupID, userMsg)
 }
 
+func handleDeviceMessageFromTopicMQTT(deviceTopic string, deviceMsg string) {
+    splitDeviceTopic := strings.Split(deviceTopic, "/")
+    if splitDeviceTopic[2] == "telegram" {
+        writeDataToDeviceChannel(deviceMsg)
+    }else {
+        var userResponse string
+        var deivceResponse string
+        var deviceCode *DeviceControlCode
+        deviceCode = nil
+        for _, controlDevice := range cmdListMapEN {
+            if controlDevice.DeviceCmd == deviceMsg {
+                deviceCode = controlDevice
+                fmt.Println(deviceCode.DeviceCmd)
+            }
+        }
+        if deviceCode != nil {
+            userResponse = "HA user: " + deviceCode.ChatCmd
+            deivceResponse = deviceCode.ChatResponseMap[deviceMsg]
+        }else {
+            userResponse = "HA user: control the device"
+            deivceResponse = cfg.CmdConfig.DefaultRespMsg["ErrorCmd"]
+        }
+        for groupID, botStatus := range groupIDBotStatusMap {
+            if botStatus == "Running" {
+                sendToTelegram(groupID, userResponse)
+                sendToTelegram(groupID, deivceResponse)
+            }
+        }
+    }
+}
+
 var messageLedDevicePubHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) {
     deviceMsg := string(msg.Payload())
     fmt.Printf("Received message: [%s] from topic: %s\n", deviceMsg, msg.Topic())
-
-    deviceTopic := strings.Split(msg.Topic(), "/")
-    if deviceTopic[2] == "telegram" {
-        writeDataToDeviceChannel(deviceMsg)
-    }else {
-        groupID := cfg.CmdConfig.GroupIDLedDevice
-        deviceResponse := "NULL"
-        sendToTelegram(groupID, "HA user just controlled the device")
-        for _, controlLed := range cmdListMapEN {
-            if controlLed.DeviceCmd == deviceMsg {
-                fmt.Println(controlLed.DeviceCmd)
-                deviceResponse = controlLed.ChatResponseMap[deviceMsg]
-            }
-        }
-        if deviceResponse != "NULL" {
-            sendToTelegram(groupID, deviceResponse)
-        }else {
-            sendToTelegram(groupID, cfg.CmdConfig.DefaultRespMsg["ErrorCmd"])
-        }
-    }
+    handleDeviceMessageFromTopicMQTT(msg.Topic(), deviceMsg)
 }
 
 var messageSensorDevicePubHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) {
@@ -138,19 +149,19 @@ func checkDeviceName(script *DeviceControlCode) DeviceName {
     return deviceName
 }
 
-func cmdListMapInit(controlLedArr []DeviceControlCode,
+func cmdListMapInit(controlDeviceArr []DeviceControlCode,
                     msgTimeout string) map[string]*DeviceControlCode {
     cmdListMap := make(map[string]*DeviceControlCode)
 
-    for i := 0 ; i < len(controlLedArr); i++ {
-        cmdListMap[controlLedArr[i].ChatCmd] = &controlLedArr[i]
-        chatCmdlist = append(chatCmdlist, controlLedArr[i].ChatCmd)
+    for i := 0 ; i < len(controlDeviceArr); i++ {
+        cmdListMap[controlDeviceArr[i].ChatCmd] = &controlDeviceArr[i]
+        chatCmdlist = append(chatCmdlist, controlDeviceArr[i].ChatCmd)
     }
-    for _, controlLed :=range controlLedArr {
-        controlLed.ChatResponseMap["Timeout"] =  cfg.CmdConfig.DefaultRespMsg[msgTimeout] 
-    } 
+    for _, controlDevice :=range controlDeviceArr {
+        controlDevice.ChatResponseMap["Timeout"] =  cfg.CmdConfig.DefaultRespMsg[msgTimeout]
+    }
 
-    return cmdListMap      
+    return cmdListMap
 }
 
 func getGroupIdTelegram (topic string) (string, error) {
@@ -175,7 +186,7 @@ func getNormStr(inputStr string) string {
         t := transform.Chain(norm.NFD, runes.Remove(runes.In(unicode.Mn)), norm.NFC)
         normStr, _, _ := transform.String(t, lowerStr)
 
-        return normStr      
+        return normStr
 }
 
 func getCommandSearchStatus(rateOfChange float32) StringSearchResult {
@@ -192,12 +203,12 @@ func getCommandSearchStatus(rateOfChange float32) StringSearchResult {
 }
 
 func handleBlockStatusOfBot(groupID string, userMsg string) {
-    splitUserMsg := strings.Split(userMsg, " ")    
+    splitUserMsg := strings.Split(userMsg, " ")
     fmt.Printf("[Bot block] GroupID: %s\n", groupID)
     if len(splitUserMsg) == 1 {
         if splitUserMsg[0] == "start" || splitUserMsg[0] == "/start"{
             groupIDBotStatusMap[groupID] = "Running"
-            sendToTelegram(groupID, "Bot is back to work")                    
+            sendToTelegram(groupID, "Bot is back to work")
         }
     }else if len(splitUserMsg) == 2 {
         if splitUserMsg[0] == "start" || splitUserMsg[0] == "/start" {
@@ -205,7 +216,7 @@ func handleBlockStatusOfBot(groupID string, userMsg string) {
                 groupIDBotStatusMap[groupID] = "Running"
                 sendToTelegram(groupID, "Enter password successfully. Bot is back to work")
             }else {
-                sendToTelegram(groupID, "Password input failed, please try again")                
+                sendToTelegram(groupID, "Password input failed, please try again")
             }
         }
     }
@@ -224,7 +235,7 @@ func handleUserEnteredPasswordForBot(groupID string, userMsg string, botStatus s
 func handleUserNeverEnteredPasswordBot(groupID string, userMsg string) {
     splitUserMsg := strings.Split(userMsg, " ")
     if len(splitUserMsg) == 1 {
-        if splitUserMsg[0] == "start" || splitUserMsg[0] == "/start"{                
+        if splitUserMsg[0] == "start" || splitUserMsg[0] == "/start"{
             sendToTelegram(groupID, "Your group has not entered a password for the bot. Enter the password in the format: \nstart + password or /start + password")
         }
     }else if len(splitUserMsg) == 2 {
@@ -234,28 +245,28 @@ func handleUserNeverEnteredPasswordBot(groupID string, userMsg string) {
                 fmt.Printf("Status: [%s]", groupIDBotStatusMap[groupID])
                 sendToTelegram(groupID, "Enter password successfully. Bot is working")
             }else {
-                sendToTelegram(groupID, "Password input failed. Please try again")                                    
+                sendToTelegram(groupID, "Password input failed. Please try again")
             }
         }
     }
 }
 
 func handleRunningStatusOfBot(groupID string, userMsg string) {
-    splitUserMsg := strings.Split(userMsg, " ")    
+    splitUserMsg := strings.Split(userMsg, " ")
     if len(splitUserMsg) == 1 {
         if splitUserMsg[0] == "/close" || splitUserMsg[0] == "close" {
             groupIDBotStatusMap[groupID] = "Block"
             sendToTelegram(groupID, "Bot temporarily stopped working")
         }else {
-            handleTeleCmd(groupID, userMsg)            
+            handleTeleCmd(groupID, userMsg)
         }
     }else {
-        handleTeleCmd(groupID, userMsg)            
+        handleTeleCmd(groupID, userMsg)
     }
 }
 
 func handleTeleCmd(groupID string, cmd string) {
-    chatCmd := removeElementAfterBracket(cmd)  
+    chatCmd := removeElementAfterBracket(cmd)
     chatCmdArr := sortCommandCompareArrayDescending(chatCmd, chatCmdlist)
     maxRatePercent :=  chatCmdArr[0].RatePercent
     cmdSearchRes := getCommandSearchStatus(maxRatePercent)
@@ -273,8 +284,8 @@ func handleTeleCmd(groupID string, cmd string) {
             handleTelegramScript(scriptVN, groupID)
         }else {
             fmt.Println("English")
-            handleTelegramScript(scriptEN, groupID)          
-        }            
+            handleTelegramScript(scriptEN, groupID)
+        }
     }
 }
 
@@ -297,7 +308,7 @@ func handleTelegramScript(script *DeviceControlCode, groupID string) {
     default:
         sendToTelegram(groupID, cfg.CmdConfig.DefaultRespMsg["ErrorCmd"])
     }
-} 
+}
 
 
 func mqttBegin(broker string, user string, pw string, messagePubHandler *mqtt.MessageHandler) mqtt.Client {
@@ -306,7 +317,7 @@ func mqttBegin(broker string, user string, pw string, messagePubHandler *mqtt.Me
     opts = mqtt.NewClientOptions()
     opts.AddBroker(broker)
     opts.SetUsername(user)
-    opts.SetPassword(pw) 
+    opts.SetPassword(pw)
     opts.SetDefaultPublishHandler(*messagePubHandler)
     client := mqtt.NewClient(opts)
     if token := client.Connect(); token.Wait() && token.Error() != nil {
@@ -343,7 +354,7 @@ func removeElementAfterBracket(strInput string) string {
     if index == -1 {
         strOutput = strInput
     }else {
-        strOutput = strInput[0:(index-1)]        
+        strOutput = strInput[0:(index-1)]
     }
     return strOutput
 }
@@ -353,31 +364,31 @@ func sendHelpResponseToTelegramUser(groupID string) {
     textVN := cfg.CmdConfig.DefaultRespMsg["ResponseHelpVN"]
     textEN := cfg.CmdConfig.DefaultRespMsg["ResponseHelpEN"]
     textKeyboard := textVN + "\n" + textEN
-    
+
     for _, cmd := range chatCmdlist {
         cmdKeyboard += "/" + cmd
     }
 
-    sendToTelegram(groupID, "[" + textKeyboard + cmdKeyboard + "]")   
+    sendToTelegram(groupID, "[" + textKeyboard + cmdKeyboard + "]")
 }
 
 func sendSuggestResponseToTelegramUser (groupID string, chatCmdArr []StringCompare) {
     var textKeyboard string
-    var cmdKeyboard string 
+    var cmdKeyboard string
     chatCmd := chatCmdArr[0].Data
 
     _, checkKeyExistsVN := cmdListMapVN[chatCmd]
     if checkKeyExistsVN == true {
         textKeyboard = cfg.CmdConfig.DefaultRespMsg["SuggestVN"]
     }else {
-        textKeyboard = cfg.CmdConfig.DefaultRespMsg["SuggestEN"]        
+        textKeyboard = cfg.CmdConfig.DefaultRespMsg["SuggestEN"]
     }
     for i := 0; i < 3; i++ {
         rateValue := fmt.Sprintf("%.2f", chatCmdArr[i].RatePercent)
-        cmdKeyboard += "/" + chatCmdArr[i].Data + " (" + rateValue + " %" + ")" 
+        cmdKeyboard += "/" + chatCmdArr[i].Data + " (" + rateValue + " %" + ")"
     }
 
-    sendToTelegram(groupID, "[" + textKeyboard + cmdKeyboard + "]")    
+    sendToTelegram(groupID, "[" + textKeyboard + cmdKeyboard + "]")
 }
 
 func senToLedDeivce(msg string) {
@@ -399,8 +410,8 @@ func sortChatCmdlist () []string{
     halfLength := len(chatCmdlist) / 2
 
     for i := 0; i < halfLength; i++ {
-        cmdList = append(cmdList, chatCmdlist[i])        
-        cmdList = append(cmdList, chatCmdlist[i + halfLength])        
+        cmdList = append(cmdList, chatCmdlist[i])
+        cmdList = append(cmdList, chatCmdlist[i + halfLength])
     }
 
     return cmdList
