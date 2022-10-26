@@ -84,36 +84,6 @@ var messageTelePubHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqt
     botHandle(groupID, userMsg)
 }
 
-func handleDeviceMessageFromTopicMQTT(deviceTopic string, deviceMsg string) {
-    splitDeviceTopic := strings.Split(deviceTopic, "/")
-    if splitDeviceTopic[2] == "telegram" {
-        writeDataToDeviceChannel(deviceMsg)
-    }else {
-        var userResponse string
-        var deivceResponse string
-        var deviceCode *DeviceControlCode
-        deviceCode = nil
-        for _, controlDevice := range cmdListMapEN {
-            if controlDevice.DeviceCmd == deviceMsg {
-                deviceCode = controlDevice
-                fmt.Println(deviceCode.DeviceCmd)
-            }
-        }
-        if deviceCode != nil {
-            userResponse = "HA user: " + deviceCode.ChatCmd
-            deivceResponse = deviceCode.ChatResponseMap[deviceMsg]
-        }else {
-            userResponse = "HA user: control the device"
-            deivceResponse = cfg.CmdConfig.DefaultRespMsg["ErrorCmd"]
-        }
-        for groupID, botStatus := range groupIDBotStatusMap {
-            if botStatus == "Running" {
-                sendToTelegram(groupID, userResponse)
-                sendToTelegram(groupID, deivceResponse)
-            }
-        }
-    }
-}
 
 var messageLedDevicePubHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) {
     deviceMsg := string(msg.Payload())
@@ -222,6 +192,36 @@ func handleBlockStatusOfBot(groupID string, userMsg string) {
     }
 }
 
+func handleDeviceMessageFromTopicMQTT(deviceTopic string, deviceMsg string) {
+    splitDeviceTopic := strings.Split(deviceTopic, "/")
+    if splitDeviceTopic[2] == "telegram" {
+        writeDataToDeviceChannel(deviceMsg)
+    }else {
+        var userResponse string
+        var deivceResponse string
+        var deviceCode *DeviceControlCode
+        deviceCode = nil
+        for _, controlDevice := range cmdListMapEN {
+            if controlDevice.DeviceCmd == deviceMsg {
+                deviceCode = controlDevice
+                fmt.Println(deviceCode.DeviceCmd)
+            }
+        }
+        if deviceCode != nil {
+            userResponse = "HA user: " + deviceCode.ChatCmd
+            deivceResponse = deviceCode.ChatResponseMap[deviceMsg]
+        }else {
+            userResponse = "HA user: control the device"
+            deivceResponse = cfg.CmdConfig.DefaultRespMsg["ErrorCmd"]
+        }
+        for groupID, botStatus := range groupIDBotStatusMap {
+            if botStatus == "Running" {
+                sendToTelegram(groupID, userResponse)
+                sendToTelegram(groupID, deivceResponse)
+            }
+        }
+    }
+}
 
 func handleUserEnteredPasswordForBot(groupID string, userMsg string, botStatus string) {
     switch botStatus {
@@ -234,11 +234,7 @@ func handleUserEnteredPasswordForBot(groupID string, userMsg string, botStatus s
 
 func handleUserNeverEnteredPasswordBot(groupID string, userMsg string) {
     splitUserMsg := strings.Split(userMsg, " ")
-    if len(splitUserMsg) == 1 {
-        if splitUserMsg[0] == "start" || splitUserMsg[0] == "/start"{
-            sendToTelegram(groupID, "Your group has not entered a password for the bot. Enter the password in the format: \nstart + password or /start + password")
-        }
-    }else if len(splitUserMsg) == 2 {
+    if len(splitUserMsg) == 2 {
         if splitUserMsg[0] == "/start" || splitUserMsg[0] == "start" {
             if splitUserMsg[1] == cfg.CmdConfig.BotPassword {
                 groupIDBotStatusMap[groupID] = "Running"
@@ -248,6 +244,8 @@ func handleUserNeverEnteredPasswordBot(groupID string, userMsg string) {
                 sendToTelegram(groupID, "Password input failed. Please try again")
             }
         }
+    }else {
+        sendToTelegram(groupID, "Your group has not entered a password for the bot. Enter the password in the format: \nstart + password or /start + password")        
     }
 }
 
