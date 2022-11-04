@@ -8,7 +8,8 @@ MqttConfig               :
   LedDeviceStatusTopic   : 'xuong/device/+/status'
   TeleSrcTopic           : 'Telegram/+/Rx'
   TeleDstTopic           : 'Telegram/GroupID/Tx'
-  SensorTopic            : 'xuong/device/+/sensor'
+  # SensorTopic            : 'xuong/device/+/sensors'
+  SensorTopic            : 'xuong/device/+/sensors'
 
 CmdConfig:
 
@@ -38,13 +39,13 @@ CmdConfig:
          'ESP34865D3AEDDC OFF'    : 'Đèn phòng bếp đã tắt'
 
     - ChatCmd                     : 'Nhiệt độ phòng bếp'
-      DeviceID                    : '123458'
+      DeviceID                    : 'ESP7821848859C8'
       DeviceCmd                   : 'TEM'
       ChatResponseMap             :
          'Sensor'                 : 'Nhiệt độ phòng bếp: '
 
     - ChatCmd                     : 'Độ ẩm phòng bếp'
-      DeviceID                    : '123458'
+      DeviceID                    : 'ESP7821848859C8'
       DeviceCmd                   : 'HUM'
       ChatResponseMap             :
          'Sensor'                 : 'Độ ẩm phòng bếp: '
@@ -75,13 +76,13 @@ CmdConfig:
          'ESP34865D3AEDDC OFF'    : 'Light kitchen was off'
 
     - ChatCmd                     : 'Kitchen temperature'
-      DeviceID                    : '123458'
+      DeviceID                    : 'ESP7821848859C8'
       DeviceCmd                   : 'TEM'
       ChatResponseMap             :
          'Sensor'                 : 'Kitchen temperature: '
 
     - ChatCmd                     : 'Kitchen humidity'
-      DeviceID                    : '123458'
+      DeviceID                    : 'ESP7821848859C8'
       DeviceCmd                   : 'HUM'
       ChatResponseMap             :
          'Sensor'                 : 'Kitchen humidity: '

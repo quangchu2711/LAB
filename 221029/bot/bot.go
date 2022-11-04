@@ -119,29 +119,30 @@ var messageSensorDevicePubHandler mqtt.MessageHandler = func(client mqtt.Client,
     fmt.Printf("Received message: %s from topic: %s\n", deviceMsg, msg.Topic())
     deviceID, err := getDeviceIDFormSensorTopic(msg.Topic())
     if err == nil {
-        testJsonString := `{"temperature":"23.45","humidity":"67"}`
-        var sensorValue Sensor
-        // err := json.Unmarshal([]byte(deviceMsg), &sensorValue)
-        err := json.Unmarshal([]byte(testJsonString), &sensorValue)
+        var sensorValue map[string]float64
+        err := json.Unmarshal([]byte(deviceMsg), &sensorValue)
         if err != nil {
             fmt.Println("[Json err]")
         }else {
-            fmt.Printf("Data: %+v\n", sensorValue)
-            updateDeviceSensorData(deviceID, sensorValue)
+            var sensorString Sensor
+            sensorString.Temperature = fmt.Sprintf("%.2f", sensorValue["temperature"])
+            sensorString.Humidity = fmt.Sprintf("%.2f", sensorValue["humidity"])
+
+            updateDeviceSensorData(deviceID, sensorString)
         }
     }
 }
 
 func addSensorData(deviceID string,
                    controlDeviceArr []DeviceControlCode,
-                   valueSenosr Sensor,
+                   valueSensor Sensor,
                    updateTime string) {
     for _, control := range controlDeviceArr {
         if control.DeviceID == deviceID {
             if control.DeviceCmd == "TEM" {
-                control.ChatResponseMap["Value"] = valueSenosr.Temperature + "℃"
+                control.ChatResponseMap["Value"] = valueSensor.Temperature + "℃"
             }else if control.DeviceCmd == "HUM" {
-                control.ChatResponseMap["Value"] = valueSenosr.Humidity + "%"
+                control.ChatResponseMap["Value"] = valueSensor.Humidity + "%"
             }
             control.ChatResponseMap["UpdateTime"] = updateTime
         }
@@ -204,7 +205,7 @@ func getDeviceIDFormSensorTopic(topic string) (string, error) {
         if topicItem[1] != "device" {
             return "0", errors.New(err)
         }else {
-            if topicItem[3] != "sensor" {
+            if topicItem[3] != "sensors" {
                 return "0", errors.New(err)
             }else {
                 deviceID := topicItem[2]
