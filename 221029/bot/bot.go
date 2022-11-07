@@ -42,9 +42,15 @@ type Command struct {
     ControlDeviceEN []DeviceControlCode
 
     DefaultRespMsg map[string]string
-    TickTimeout time.Duration
+    LedDeviceTimeout time.Duration
     StringRateThreshold float32
-    DeviceControlGroupID string
+    ThresholdDisplayUpdateTime int
+}
+
+type UserInformation struct {
+    GroupID string
+    UserName string
+    ChatCommand string
 }
 
 type DeviceName int
@@ -84,12 +90,19 @@ var ledDeviceChannel chan string
 var telegramClient mqtt.Client
 var sensorDeviceClient mqtt.Client
 var deviceUserMap map[string]string
+var deviceControlGroupID string
 
 var messageTelegramPubHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) {
     teleMsg := string(msg.Payload())
     fmt.Printf("Received message: %s from topic: %s\n", teleMsg, msg.Topic())
-    groupID, _ := getGroupIdTelegram(msg.Topic())
-    handleTelegramCmd(groupID, teleMsg)
+    groupID, userName, _ := getGroupIdUsernameFromTelegramTopic(msg.Topic())
+    deviceControlGroupID = groupID
+    fmt.Println("_GroupID:" + groupID)
+    var userInfor UserInformation
+    userInfor.GroupID = groupID
+    userInfor.UserName = userName
+    userInfor.ChatCommand = teleMsg
+    handleTelegramCmd(&userInfor)
 }
 
 var messageLedDevicePubHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) {
@@ -101,15 +114,19 @@ var messageLedDevicePubHandler mqtt.MessageHandler = func(client mqtt.Client, ms
         writeDataToLedDeviceChannel(deviceMsg)
     }else {
         responseMsg := "NULL"
-        textVN := "Người dùng HA: "
+        var cmdVN string
         for _, controlDevice :=range cfg.CmdConfig.ControlDeviceVN{
             if controlDevice.DeviceCmd == deviceMsg {
-                textVN += controlDevice.ChatCmd + "\n"
+                cmdVN = controlDevice.ChatCmd
                 responseMsg = controlDevice.ChatResponseMap[deviceMsg]
             }
         }
         if responseMsg != "NULL" {
-            sendToTelegram(cfg.CmdConfig.DeviceControlGroupID, textVN + responseMsg)
+            var userInfor UserInformation
+            userInfor.UserName = "Người dùng Home Assistant"
+            userInfor.ChatCommand = cmdVN
+            userInfor.GroupID = deviceControlGroupID
+            sendToTelegram(&userInfor, responseMsg)
         }
     }
 }
@@ -119,15 +136,14 @@ var messageSensorDevicePubHandler mqtt.MessageHandler = func(client mqtt.Client,
     fmt.Printf("Received message: %s from topic: %s\n", deviceMsg, msg.Topic())
     deviceID, err := getDeviceIDFormSensorTopic(msg.Topic())
     if err == nil {
-        var sensorValue map[string]float64
-        err := json.Unmarshal([]byte(deviceMsg), &sensorValue)
+        var humidityValue map[string]float64
+        err := json.Unmarshal([]byte(deviceMsg), &humidityValue)
         if err != nil {
             fmt.Println("[Json err]")
         }else {
             var sensorString Sensor
-            sensorString.Temperature = fmt.Sprintf("%.2f", sensorValue["temperature"])
-            sensorString.Humidity = fmt.Sprintf("%.2f", sensorValue["humidity"])
-
+            sensorString.Temperature = fmt.Sprintf("%.1f", humidityValue["temperature"])
+            sensorString.Humidity = fmt.Sprintf("%.1f", humidityValue["humidity"])
             updateDeviceSensorData(deviceID, sensorString)
         }
     }
@@ -139,20 +155,22 @@ func addSensorData(deviceID string,
                    updateTime string) {
     for _, control := range controlDeviceArr {
         if control.DeviceID == deviceID {
-            if control.DeviceCmd == "TEM" {
-                control.ChatResponseMap["Value"] = valueSensor.Temperature + "℃"
-            }else if control.DeviceCmd == "HUM" {
-                control.ChatResponseMap["Value"] = valueSensor.Humidity + "%"
+            if control.DeviceCmd == "SENSOR" {
+                temStr := control.ChatResponseMap["Temperature"]
+                humStr := control.ChatResponseMap["Humidity"]
+                tempIdx := strings.Index(temStr , ":")
+                humIdx  := strings.Index(humStr , ":")
+                control.ChatResponseMap["Temperature"] = temStr[0:(tempIdx + 1)] + " " + valueSensor.Temperature + "℃\n"
+                control.ChatResponseMap["Humidity"] = humStr[0:(humIdx + 1)] + " " +  valueSensor.Humidity + "%\n"
+                control.ChatResponseMap["UpdateTime"] = updateTime
             }
-            control.ChatResponseMap["UpdateTime"] = updateTime
         }
     }
 }
 
 func checkDeviceName(script *DeviceControlCode) DeviceName {
     var deviceName DeviceName
-    _, checkKeyExists := script.ChatResponseMap["Sensor"]
-    if checkKeyExists == true {
+    if script.DeviceCmd == "SENSOR" {
         deviceName = SensorDeivce
     }else {
         deviceName = LedDevice
@@ -215,18 +233,19 @@ func getDeviceIDFormSensorTopic(topic string) (string, error) {
     }
 }
 
-func getGroupIdTelegram (topic string) (string, error) {
+func getGroupIdUsernameFromTelegramTopic (topic string) (string, string, error) {
     topicItem := strings.Split(topic, "/")
     err := "Incorrect topic format"
 
     if topicItem[0] != "Telegram" {
-        return "0", errors.New(err)
+        return "0", "0", errors.New(err)
     }else {
-        if topicItem[2] != "Rx" {
-            return "0", errors.New(err)
+        if topicItem[3] != "Rx" {
+            return "0", "0", errors.New(err)
         }else {
             groupID := topicItem[1]
-            return groupID, nil
+            userName := topicItem[2]
+            return groupID, userName, nil
         }
     }
 }
@@ -283,7 +302,7 @@ func createTextAboutTimeDifference(language string, hours int, minutes, seconds 
 
 }
 
-func handleTelegramScript(script *DeviceControlCode, groupID string, language string) {
+func handleTelegramScript(script *DeviceControlCode, userInfor *UserInformation, language string) {
     deviceName := checkDeviceName(script)
 
     switch deviceName {
@@ -291,15 +310,14 @@ func handleTelegramScript(script *DeviceControlCode, groupID string, language st
         readDataChannel := readDataFromLedDeviceChannel(script)
         resDataTele, checkKeyExists := script.ChatResponseMap[readDataChannel];
         if checkKeyExists == true {
-            sendToTelegram(groupID, resDataTele)
+            sendToTelegram(userInfor, resDataTele)
         }else {
-            sendToTelegram(groupID, cfg.CmdConfig.DefaultRespMsg["ErrorCmd"])
+            sendToTelegram(userInfor, cfg.CmdConfig.DefaultRespMsg["ErrorCmd"])
         }
     case SensorDeivce:
-        sensorText := script.ChatResponseMap["Sensor"]
-        sensorValue := script.ChatResponseMap["Value"]
+        var timeDifferent string
+        sensorResponse := script.ChatResponseMap["Temperature"] + script.ChatResponseMap["Humidity"]
         updateTime := script.ChatResponseMap["UpdateTime"]
-
         previousTime, _ := time.Parse("01-02-2006 15:04:05", updateTime)
         timeNow := time.Now()
         timeNowFormat := timeNow.Format("01-02-2006 15:04:05")
@@ -308,36 +326,43 @@ func handleTelegramScript(script *DeviceControlCode, groupID string, language st
         hours := int(diffTime.Hours())
         minutes := int(diffTime.Minutes())
         seconds := int(diffTime.Seconds())
-        if language == "Vietnamese" {
-            textDiffVN := createTextAboutTimeDifference("Vietnamese", hours, minutes, seconds)
-            sendToTelegram(groupID, sensorText + sensorValue + "\n" + updateTime + "\n" + textDiffVN)
+        if seconds >= cfg.CmdConfig.ThresholdDisplayUpdateTime {
+            if language == "Vietnamese" {
+                timeDifferent = createTextAboutTimeDifference("Vietnamese", hours, minutes, seconds)
+            }else {
+                timeDifferent = createTextAboutTimeDifference("English", hours, minutes, seconds)
+            }
+            sendToTelegram(userInfor, sensorResponse + updateTime + "\n" + timeDifferent)
         }else {
-            textDiffEN := createTextAboutTimeDifference("English", hours, minutes, seconds)
-            sendToTelegram(groupID, sensorText + sensorValue + "\n" + updateTime + "\n" + textDiffEN)
+            sendToTelegram(userInfor, sensorResponse)
         }
     }
 }
 
-func handleTelegramCmd(groupID string, cmd string) {
-    chatCmd := removeElementAfterBracket(cmd)
+func handleTelegramCmd(userInfor *UserInformation) {
+    cmd := userInfor.ChatCommand
+    chatCmd, err := removeElementAfterBracket(cmd)
+    if err == true {
+        userInfor.ChatCommand = chatCmd
+    }
     chatCmdArr := sortCommandCompareArrayDescending(chatCmd, chatCmdlist)
     maxRatePercent :=  chatCmdArr[0].RatePercent
     cmdSearchRes := getCommandSearchStatus(maxRatePercent)
 
     switch cmdSearchRes {
     case Different:
-        sendHelpResponseToTelegramUser(groupID)
+        sendHelpResponseToTelegramUser(userInfor)
     case AlmostSame:
-        sendSuggestResponseToTelegramUser(groupID, chatCmdArr)
+        sendSuggestResponseToTelegramUser(userInfor, chatCmdArr)
     case Same:
         scriptVN, checkKeyExistsVN := cmdListMapVN[chatCmdArr[0].Data]
         scriptEN, _ := cmdListMapEN[chatCmd];
         if checkKeyExistsVN == true {
             fmt.Println("Vietnamese")
-            handleTelegramScript(scriptVN, groupID, "Vietnamese")
+            handleTelegramScript(scriptVN, userInfor, "Vietnamese")
         }else {
             fmt.Println("English")
-            handleTelegramScript(scriptEN, groupID, "English")
+            handleTelegramScript(scriptEN, userInfor, "English")
         }
     }
 }
@@ -367,29 +392,32 @@ func readDataFromLedDeviceChannel(deviceScript *DeviceControlCode) (string) {
     case channelData =  <-ledDeviceChannel:
         delete(deviceUserMap, deviceScript.DeviceID)
         return channelData
-    case <-time.After(cfg.CmdConfig.TickTimeout * time.Second):
+    case <-time.After(cfg.CmdConfig.LedDeviceTimeout * time.Second):
         delete(deviceUserMap, deviceScript.DeviceID)
         channelData = "Timeout"
         return channelData
     }
 }
 
-func removeElementAfterBracket(strInput string) string {
+func removeElementAfterBracket(strInput string) (string, bool) {
     var strOutput string
+    var err bool
     index := strings.Index(strInput, "(")
     if index == -1 {
         strOutput = strInput
+        err = false
     }else {
         strOutput = strInput[0:(index-1)]
+        err = true
     }
-    return strOutput
+    return strOutput, err
 }
 
 func writeDataToLedDeviceChannel(cmd string) {
     ledDeviceChannel <-cmd
 }
 
-func sendHelpResponseToTelegramUser(groupID string) {
+func sendHelpResponseToTelegramUser(userInfor *UserInformation) {
     var cmdKeyboard string
     textVN := cfg.CmdConfig.DefaultRespMsg["ResponseHelpVN"]
     textEN := cfg.CmdConfig.DefaultRespMsg["ResponseHelpEN"]
@@ -399,10 +427,10 @@ func sendHelpResponseToTelegramUser(groupID string) {
         cmdKeyboard += "/" + cmd
     }
 
-    sendToTelegram(groupID, "[" + textKeyboard + cmdKeyboard + "]")
+    sendToTelegram(userInfor, "[" + textKeyboard + cmdKeyboard + "]")
 }
 
-func sendSuggestResponseToTelegramUser (groupID string, chatCmdArr []StringCompare) {
+func sendSuggestResponseToTelegramUser (userInfor *UserInformation, chatCmdArr []StringCompare) {
     var textKeyboard string
     var cmdKeyboard string
     chatCmd := chatCmdArr[0].Data
@@ -418,7 +446,7 @@ func sendSuggestResponseToTelegramUser (groupID string, chatCmdArr []StringCompa
         cmdKeyboard += "/" + chatCmdArr[i].Data + " (" + rateValue + " %" + ")"
     }
 
-    sendToTelegram(groupID, "[" + textKeyboard + cmdKeyboard + "]")
+    sendToTelegram(userInfor, "[" + textKeyboard + cmdKeyboard + "]")
 }
 
 func sendToDeivce(deviceID string, msg string) {
@@ -427,9 +455,14 @@ func sendToDeivce(deviceID string, msg string) {
     fmt.Println("Publish: " + ledDeviceCmdTopic + " msg: " + msg)
 }
 
-func sendToTelegram(groupID string, msg string) {
-    teleDstTopic := strings.Replace(cfg.MqttConfig.TeleDstTopic, "GroupID", groupID, 1)
-    telegramClient.Publish(teleDstTopic, 0, false, msg)
+func sendToTelegram(userInfor *UserInformation, responseMsg string) {
+    fmt.Printf("type: %T - %s\n", userInfor.GroupID, userInfor.GroupID)
+    teleDstTopic := strings.Replace(cfg.MqttConfig.TeleDstTopic, "GroupID", userInfor.GroupID, 1)
+    fmt.Printf("teleDstTopic: %s\n", teleDstTopic)
+
+    controlUserMsg := userInfor.UserName + ": " + userInfor.ChatCommand
+    telegramClient.Publish(teleDstTopic, 0, false, controlUserMsg)
+    telegramClient.Publish(teleDstTopic, 0, false, responseMsg)
 }
 
 func sortChatCmdlist () []string{

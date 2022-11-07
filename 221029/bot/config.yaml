@@ -1,14 +1,13 @@
 
 MqttConfig               :
-  Broker               : 'orangepione:1883'
-  # Broker                 : 'localhost:1883'
+  # Broker               : 'orangepione:1883'
+  Broker                 : 'localhost:1883'
   User                   : 'nmtam'
   Password               : '221220'
   LedDeviceCmdTopic      : 'xuong/device/DeviceID/cmd'
   LedDeviceStatusTopic   : 'xuong/device/+/status'
-  TeleSrcTopic           : 'Telegram/+/Rx'
+  TeleSrcTopic           : 'Telegram/+/+/Rx'
   TeleDstTopic           : 'Telegram/GroupID/Tx'
-  # SensorTopic            : 'xuong/device/+/sensors'
   SensorTopic            : 'xuong/device/+/sensors'
 
 CmdConfig:
@@ -38,17 +37,12 @@ CmdConfig:
       ChatResponseMap             :
          'ESP34865D3AEDDC OFF'    : 'Đèn phòng bếp đã tắt'
 
-    - ChatCmd                     : 'Nhiệt độ phòng bếp'
+    - ChatCmd                     : 'Tình trạng phòng bếp'
       DeviceID                    : 'ESP7821848859C8'
-      DeviceCmd                   : 'TEM'
+      DeviceCmd                   : 'SENSOR'
       ChatResponseMap             :
-         'Sensor'                 : 'Nhiệt độ phòng bếp: '
-
-    - ChatCmd                     : 'Độ ẩm phòng bếp'
-      DeviceID                    : 'ESP7821848859C8'
-      DeviceCmd                   : 'HUM'
-      ChatResponseMap             :
-         'Sensor'                 : 'Độ ẩm phòng bếp: '
+         'Temperature'            : 'Nhiệt độ phòng bếp: '
+         'Humidity'               : 'Độ ẩm phòng bếp: '
 
   ControlDeviceEN:
     - ChatCmd                     : 'Light living room on'
@@ -75,17 +69,12 @@ CmdConfig:
       ChatResponseMap             :
          'ESP34865D3AEDDC OFF'    : 'Light kitchen was off'
 
-    - ChatCmd                     : 'Kitchen temperature'
+    - ChatCmd                     : 'Kitchen status'
       DeviceID                    : 'ESP7821848859C8'
-      DeviceCmd                   : 'TEM'
+      DeviceCmd                   : 'SENSOR'
       ChatResponseMap             :
-         'Sensor'                 : 'Kitchen temperature: '
-
-    - ChatCmd                     : 'Kitchen humidity'
-      DeviceID                    : 'ESP7821848859C8'
-      DeviceCmd                   : 'HUM'
-      ChatResponseMap             :
-         'Sensor'                 : 'Kitchen humidity: '
+        'Temperature'             : 'Kitchen temperature: '
+        'Humidity'                : 'Kitchen humidity: '
 
   DefaultRespMsg:
     'ErrorCmd'         : 'Wrong command. Please try again!'
@@ -96,6 +85,6 @@ CmdConfig:
     'SuggestVN'        : 'Có phải bạn muốn:'
     'SuggestEN'        : 'Do you want:'
 
-  TickTimeout: 3
+  LedDeviceTimeout: 3
   StringRateThreshold: 50.0
-  DeviceControlGroupID    : "-1001625126544"
+  ThresholdDisplayUpdateTime : 5

@@ -23,7 +23,6 @@ type Mqtt struct {
 type Telegram struct {
     BotName string
     BotToken string
-    IdBotChat int64
     DeviceControlGroupID int64
 }
 
@@ -131,12 +130,13 @@ func sendInlineButtonMsgToTelegramGroup(groupID int64, textDisplay string, cmdAr
 }
 
 
-func sendToBot(updateGroupId int64, updateText string ) {
+func sendToBot(updateGroupId int64, userName string, updateText string ) {
     groupID := strconv.FormatInt(updateGroupId, 10)
-
-    teleSrcTopic := strings.Replace(cfg.MqttConfig.TeleSrcTopic, "GroupID", groupID, 1)
+    var teleSrcTopic string
+    teleSrcTopic = strings.Replace(cfg.MqttConfig.TeleSrcTopic, "GroupID", groupID, 1)
+    teleSrcTopic = strings.Replace(teleSrcTopic, "UserName", userName, 1)
     mqttClient.Publish(teleSrcTopic, 0, false, updateText)
-    fmt.Println(cfg.MqttConfig.TeleSrcTopic + ": " + updateText)
+    fmt.Println(teleSrcTopic + ": " + updateText)
 }
 
 func telegramBotBegin(bot_token string) (tgbotapi.UpdatesChannel, *tgbotapi.BotAPI) {
@@ -172,23 +172,24 @@ func main() {
     mqttClient.Subscribe(cfg.MqttConfig.TeleDstTopic, 1, nil)
     updates, bot = telegramBotBegin(cfg.TelegramConfig.BotToken)
     var groupID int64
+    var userName string
 
     for update := range updates {
         if update.Message != nil {
             groupID = update.Message.Chat.ID
-            fmt.Println(groupID)
+            userName = update.Message.From.FirstName + " " + update.Message.From.LastName
             if groupID == cfg.TelegramConfig.DeviceControlGroupID {
-                fmt.Printf("[%s]\n", update.Message.Chat.UserName)
-                sendToBot(groupID, update.Message.Text)
+                sendToBot(groupID, userName, update.Message.Text)
             }
         }else if update.CallbackQuery != nil {
             groupID = update.CallbackQuery.Message.Chat.ID
+            userName = update.CallbackQuery.From.FirstName + " " + update.CallbackQuery.From.LastName
             if groupID == cfg.TelegramConfig.DeviceControlGroupID {
                 callback := tgbotapi.NewCallback(update.CallbackQuery.ID, update.CallbackQuery.Data)
                 if _, err := bot.Request(callback); err != nil {
                     panic(err)
                 }
-                sendToBot(groupID, update.CallbackQuery.Data)
+                sendToBot(groupID, userName, update.CallbackQuery.Data)
             }
         }
     }
