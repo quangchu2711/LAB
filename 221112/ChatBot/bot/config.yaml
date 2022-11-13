@@ -1,0 +1,90 @@
+
+MqttConfig               :
+  # Broker               : 'orangepione:1883'
+  Broker                 : 'localhost:1883'
+  User                   : 'nmtam'
+  Password               : '221220'
+  LedDeviceCmdTopic      : 'xuong/device/DeviceID/cmd'
+  LedDeviceStatusTopic   : 'xuong/device/+/status'
+  TeleSrcTopic           : 'Telegram/+/Rx'
+  TeleDstTopic           : 'Telegram/GroupID/Tx'
+  SensorTopic            : 'xuong/device/+/sensors'
+
+CmdConfig:
+
+  ControlDeviceVN:
+    - ChatCmd                     : 'Bật đèn phòng khách'
+      DeviceID                    : 'ESP7821848D2D08'
+      DeviceCmd                   : 'ESP7821848D2D08 ON'
+      ChatResponseMap             :
+         'ESP7821848D2D08 ON'     : 'Đèn phòng khách đã bật'
+
+    - ChatCmd                     : 'Tắt đèn phòng khách'
+      DeviceID                    : 'ESP7821848D2D08'
+      DeviceCmd                   : 'ESP7821848D2D08 OFF'
+      ChatResponseMap   :
+         'ESP7821848D2D08 OFF'    : 'Đèn phòng khách đã tắt'
+
+    - ChatCmd                     : 'Bật đèn phòng bếp'
+      DeviceID                    : 'ESP34865D3AEDDC'
+      DeviceCmd                   : 'ESP34865D3AEDDC ON'
+      ChatResponseMap             :
+         'ESP34865D3AEDDC ON'     : 'Đèn phòng bếp đã bật'
+
+    - ChatCmd                     : 'Tắt đèn phòng bếp'
+      DeviceID                    : 'ESP34865D3AEDDC'
+      DeviceCmd                   : 'ESP34865D3AEDDC OFF'
+      ChatResponseMap             :
+         'ESP34865D3AEDDC OFF'    : 'Đèn phòng bếp đã tắt'
+
+    - ChatCmd                     : 'Tình trạng phòng bếp'
+      DeviceID                    : 'ESP7821848859C8'
+      DeviceCmd                   : 'SENSOR'
+      ChatResponseMap             :
+         'Temperature'            : 'Nhiệt độ phòng bếp: '
+         'Humidity'               : 'Độ ẩm phòng bếp: '
+
+  ControlDeviceEN:
+    - ChatCmd                     : 'Light living room on'
+      DeviceID                    : 'ESP7821848D2D08'
+      DeviceCmd                   : 'ESP7821848D2D08 ON'
+      ChatResponseMap             :
+         'ESP7821848D2D08 ON'     : 'Light living room was on'
+
+    - ChatCmd                     : 'Light living room off'
+      DeviceID                    : 'ESP7821848D2D08'
+      DeviceCmd                   : 'ESP7821848D2D08 OFF'
+      ChatResponseMap             :
+         'ESP7821848D2D08 OFF'    : 'Light living room was off'
+
+    - ChatCmd                     : 'Light kitchen on'
+      DeviceID                    : 'ESP34865D3AEDDC'
+      DeviceCmd                   : 'ESP34865D3AEDDC ON'
+      ChatResponseMap             :
+         'ESP34865D3AEDDC ON'     : 'Light kitchen was on'
+
+    - ChatCmd                     : 'Light kitchen off'
+      DeviceID                    : 'ESP34865D3AEDDC'
+      DeviceCmd                   : 'ESP34865D3AEDDC OFF'
+      ChatResponseMap             :
+         'ESP34865D3AEDDC OFF'    : 'Light kitchen was off'
+
+    - ChatCmd                     : 'Kitchen status'
+      DeviceID                    : 'ESP7821848859C8'
+      DeviceCmd                   : 'SENSOR'
+      ChatResponseMap             :
+        'Temperature'             : 'Kitchen temperature: '
+        'Humidity'                : 'Kitchen humidity: '
+
+  DefaultRespMsg:
+    'ErrorCmd'         : 'Wrong command. Please try again!'
+    'TimeoutVN'        : 'Quá thời gian, không nhận được phản hồi từ thiết bị'
+    'TimeoutEN'        : 'Time out, no response from device'
+    'ResponseHelpVN'   : 'Yêu cầu không rõ, bạn có thể thử'
+    'ResponseHelpEN'   : 'Request unknown, you can request'
+    'SuggestVN'        : 'Có phải bạn muốn:'
+    'SuggestEN'        : 'Do you want:'
+
+  LedDeviceTimeout: 3
+  StringRateThreshold: 50.0
+  ThresholdDisplayUpdateTime : 5
