@@ -179,6 +179,7 @@ func main() {
             groupID = update.Message.Chat.ID
             userName = update.Message.From.FirstName + " " + update.Message.From.LastName
             if groupID == cfg.TelegramConfig.DeviceControlGroupID {
+                sendNormalMsgToTeleGroup(groupID, userName + " >> " + update.Message.Text)
                 sendToBot(groupID, userName, update.Message.Text)
             }
         }else if update.CallbackQuery != nil {

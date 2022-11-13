@@ -493,7 +493,7 @@ func sortCommandCompareArrayDescending(str string, strArr[] string) ([]StringCom
             strCmp.RatePercent = 100.0 - (float32(numTransStep) / float32(len(str2)) * 100.0)
         }
         chatCmdArr = append(chatCmdArr, strCmp)
-        // fmt.Printf("[%s - %d - %.2f]\n", getNormStr(strArr[i]), numTransStep, strCmp.RatePercent)
+        fmt.Printf("[%s - %d - %.2f]\n", getNormStr(strArr[i]), numTransStep, strCmp.RatePercent)
     }
     sort.SliceStable(chatCmdArr, func(i, j int) bool {
         return chatCmdArr[i].RatePercent > chatCmdArr[j].RatePercent
