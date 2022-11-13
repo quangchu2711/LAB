@@ -1,7 +1,7 @@
 
 MqttConfig               :
-  # Broker               : 'orangepione:1883'
-  Broker                 : 'localhost:1883'
+  Broker               : 'orangepione:1883'
+  # Broker                 : 'localhost:1883'
   User                   : 'nmtam'
   Password               : '221220'
   LedDeviceCmdTopic      : 'xuong/device/DeviceID/cmd'
@@ -37,6 +37,13 @@ CmdConfig:
       ChatResponseMap             :
          'ESP34865D3AEDDC OFF'    : 'Đèn phòng bếp đã tắt'
 
+    - ChatCmd                     : 'Tình trạng phòng khách'
+      DeviceID                    : 'ESP083AF2B9930C'
+      DeviceCmd                   : 'SENSOR'
+      ChatResponseMap             :
+         'Temperature'            : 'Nhiệt độ phòng khách: '
+         'Humidity'               : 'Độ ẩm phòng khách: '
+
     - ChatCmd                     : 'Tình trạng phòng bếp'
       DeviceID                    : 'ESP7821848859C8'
       DeviceCmd                   : 'SENSOR'
@@ -68,6 +75,13 @@ CmdConfig:
       DeviceCmd                   : 'ESP34865D3AEDDC OFF'
       ChatResponseMap             :
          'ESP34865D3AEDDC OFF'    : 'Light kitchen was off'
+
+    - ChatCmd                     : 'Living room status'
+      DeviceID                    : 'ESP083AF2B9930C'
+      DeviceCmd                   : 'SENSOR'
+      ChatResponseMap             :
+        'Temperature'             : 'Living room temperature: '
+        'Humidity'                : 'Living room humidity: '
 
     - ChatCmd                     : 'Kitchen status'
       DeviceID                    : 'ESP7821848859C8'

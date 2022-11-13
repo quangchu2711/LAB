@@ -5,8 +5,8 @@ TelegramConfig    :
   DeviceControlGroupID    : -1001625126544
 
 MqttConfig        :
-  # Broker          : 'orangepione:1883'
-  Broker          : 'localhost:1883'
+  Broker          : 'orangepione:1883'
+  # Broker          : 'localhost:1883'
   User            : 'nmtam'
   Password        : '221220'
   TeleSrcTopic    : 'Telegram/GroupID/Rx'
