@@ -12,6 +12,8 @@ import (
 
 type Mqtt struct {
     Broker string
+    User string
+    Password string
     TopicTest string
 }
 
@@ -54,19 +56,19 @@ func yaml_file_handle() {
 
 }
 
-func mqtt_begin(broker string) mqtt.Client {
+func mqtt_begin(broker string, user string, pw string) mqtt.Client {
     var opts *mqtt.ClientOptions = new(mqtt.ClientOptions)
 
     opts = mqtt.NewClientOptions()
-
     opts.AddBroker(fmt.Sprintf(broker))
-
+    opts.SetUsername(user)
+    opts.SetPassword(pw)
     opts.SetDefaultPublishHandler(messagePubHandler)
-
     client := mqtt.NewClient(opts)
     if token := client.Connect(); token.Wait() && token.Error() != nil {
         panic(token.Error())
     }
+
     return client
 }
 
@@ -97,7 +99,7 @@ func telegram_bot_begin(bot_token string) (tgbotapi.UpdatesChannel, *tgbotapi.Bo
 func main() {
     yaml_file_handle()
 
-    mqtt_client := mqtt_begin(cfg.MqttConfig.Broker)
+    mqtt_client := mqtt_begin(cfg.MqttConfig.Broker, cfg.MqttConfig.User, cfg.MqttConfig.Password)
 
     mqtt_client.Subscribe(cfg.MqttConfig.TopicTest, 1, nil)
 
@@ -106,6 +108,7 @@ func main() {
     for update := range updates {
         message := tgbotapi.NewMessage(cfg.TelegramConfig.IdBotChat, update.Message.Text)
         bot.Send(message)
+        fmt.Printf("======> ID: %d\n", update.Message.Chat.ID)
         fmt.Println("Telegram: " + update.Message.Text)
     }
 }

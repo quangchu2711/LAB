@@ -5,4 +5,6 @@ TelegramConfig    :
 
 MqttConfig        :
   Broker          : 'localhost:1883'
-  TopicTest    : 'TEST'
+  User            : 'nmtam'
+  Password        : '221220'
+  TopicTest       : 'TEST'
